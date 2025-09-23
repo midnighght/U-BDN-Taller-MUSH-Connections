@@ -2,40 +2,42 @@ import { useState } from 'react';
 import { api } from '../services/api';
 
 export const useAuth = () => {
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const login = async (email: string, password: string) => {
     setLoading(true);
+    setError('');
+    
+    console.log('🔄 Iniciando proceso de login...');
+    
     try {
-      // ESTA ES UNA PETICIÓN SIMULADA - LA CAMBIAREMOS LUEGO
-      console.log('Intentando login con:', email, password);
+      // Llamamos al servicio API
+      const result = await api.login(email, password);
       
-      // Simulamos una respuesta exitosa después de 1 segundo
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('🎉 Respuesta del backend recibida');
       
-      // Datos de usuario de prueba
-      const mockUser = {
-        id: '1',
-        name: 'Usuario de Prueba',
-        email: email,
-        avatar: ''
+      // Si llegamos aquí, el login fue exitoso
+      return { 
+        success: true, 
+        data: result 
       };
       
-      setUser(mockUser);
-      localStorage.setItem('token', 'token-simulado-para-pruebas');
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: 'Error en el login' };
+    } catch (err: any) {
+      console.log('💥 Error capturado:', err.message);
+      setError(err.message);
+      return { 
+        success: false, 
+        error: err.message 
+      };
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('token');
+  return {
+    loading,
+    error,
+    login
   };
-
-  return { user, loading, login, logout };
 };
