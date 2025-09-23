@@ -6,26 +6,26 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log('📝 Formulario enviado');
-    console.log('Email:', email);
-    console.log('Password:', password);
-    
-    // Llamar a la función de login REAL
-    const result = await login(email, password);
-    
-    if (result.success) {
-      alert('¡CONEXIÓN EXITOSA CON BACKEND! 🎉\n\nDatos recibidos: ' + JSON.stringify(result.data, null, 2));
-      setEmail('');
-      setPassword('');
-    }else {
-      console.log('❌ PRUEBA FALLIDA');
-      console.log("Error",result.error);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
   
-    }
-  };
+  console.log('=== 🚀 INICIANDO PRUEBA COMPLETA ===');
+  console.log('1. 📝 Datos del formulario:');
+  console.log('   Email:', email);
+  console.log('   Password:', password);
+  
+  const result = await login(email, password);
+  
+  if (result.success) {
+    console.log('=== ✅ PRUEBA EXITOSA ===');
+    alert('¡FELICIDADES! 🎉\nFrontend y backend comunicándose correctamente.\n\nToken: ' + result.data.access_token);
+    setEmail('');
+    setPassword('');
+  } else {
+    console.log('=== ❌ PRUEBA FALLIDA ===');
+    console.log('Error:', result.error);
+  }
+};
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

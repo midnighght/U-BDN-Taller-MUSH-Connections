@@ -1,51 +1,62 @@
 const API_BASE_URL = 'http://localhost:3000';
 
 export const api = {
+  // 🔥 PRIMERO: Probar si el backend responde
   async testConnection() {
-    console.log('🧪 Probando conexión básica...');
     try {
-      const response = await fetch(API_BASE_URL);
-      console.log('✅ Backend responde. Status:', response.status);
-      return true;
+      console.log('🧪 Probando conexión con backend...');
+      const response = await fetch(`${API_BASE_URL}/auth/test`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Backend responde:', data.message);
+        return true;
+      } else {
+        console.log('❌ Backend no responde correctamente');
+        return false;
+      }
     } catch (error) {
-      console.log('❌ No se puede conectar al backend:', error);
+      console.log('💥 Error de conexión:', error);
       return false;
     }
   },
 
+  // 🔥 SEGUNDO: Hacer login (POST correcto)
   async login(email: string, password: string) {
-    console.log('🔐 Iniciando login...');
+    console.log('🔐 Preparando login para:', email);
     
-    // Primero probamos la conexión básica
+    // Primero probar conexión
     const isConnected = await this.testConnection();
     if (!isConnected) {
-      throw new Error('El backend no está accesible. Verifica que esté ejecutándose.');
+      throw new Error('No se puede conectar al backend');
     }
     
     try {
-      console.log('📨 Enviando datos de login...');
+      console.log('📨 Enviando petición POST a /auth/login...');
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
+        method: 'POST', // ← IMPORTANTE: POST no GET
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email: email, 
+          password: password 
+        }),
       });
 
-      console.log('📡 Status de respuesta:', response.status);
+      console.log('📡 Respuesta recibida. Status:', response.status);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🎉 Login exitoso. Datos:', data);
-        return data;
-      } else {
-        const errorText = await response.text();
-        console.log('❌ Error del backend:', errorText);
-        throw new Error(`Error ${response.status}: ${errorText}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+      
+      const data = await response.json();
+      console.log('🎉 Login exitoso. Datos recibidos:', data);
+      return data;
+      
     } catch (error: any) {
-      console.log('💥 Error de conexión:', error.message);
-      throw new Error('Error de red: ' + error.message);
+      console.log('💥 Error en login:', error.message);
+      throw new Error('Error en login: ' + error.message);
     }
   }
 };
