@@ -9,6 +9,7 @@ import { CommunitiesModule } from './communities/communities.module';
 import { CommentsController } from './comments/comments.controller';
 import { CommentsService } from './comments/comments.service';
 import { CommentsModule } from './comments/comments.module';
+import { RegistrationModule } from './registration/registration.module';
 
 @Module({
    imports: [
@@ -18,6 +19,7 @@ import { CommentsModule } from './comments/comments.module';
     PostsModule,
     CommunitiesModule,
     CommentsModule,
+    RegistrationModule,
   ],
   controllers: [AppController, CommentsController],
   providers: [AppService, CommentsService],

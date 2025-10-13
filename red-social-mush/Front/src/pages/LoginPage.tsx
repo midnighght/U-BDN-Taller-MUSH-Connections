@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
-
+  const navigate = useNavigate();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Intentando login con:', email);
@@ -14,6 +15,7 @@ const LoginPage = () => {
     
     if (result.success) {
       console.log('✅ Login exitoso');
+      navigate('/home');
       // La redirección es automática por el ProtectedRoute
     } else {
       console.log('❌ Error:', result.error);
@@ -74,6 +76,14 @@ const LoginPage = () => {
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
+
+     <button
+          className="w-full mt-4 bg-gray-200 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
+          type="button"
+          onClick={() => navigate('/RegisterPage')}
+        >
+          Registrarse
+        </button>
 
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-700 text-center">

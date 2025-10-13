@@ -1,0 +1,35 @@
+services:
+    
+    mongodb-service:
+        image: mongodb/mongodb-community-server:latest
+        container_name: mush-mongodb
+        restart: unless-stopped
+        ports:
+            - "38130:27017"
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: mush
+            MONGO_INITDB_ROOT_PASSWORD: password1234
+            MONGODB_EXTRA_ARGS: --logpath /var/log/mongodb/mongod.log --logappend --verbose
+        networks:
+            - app-network
+
+    neo4j-service:
+        image: neo4j:5
+        container_name: mush-neo4j
+        restart: unless-stopped
+        ports:
+            - "7474:7474"
+            - "7687:7687"
+        environment:
+            NEO4J_AUTH: neo4j/password1234
+        volumes:
+            - neo4j-data:/data
+        networks:
+            - app-network
+
+volumes:
+  neo4j-data:
+ 
+networks:
+  app-network:
+    driver: bridge

@@ -1,14 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import type { Date } from 'mongoose';
+
 
 export type UserDocument = User & Document;
 
 @Schema()
 export class User {
 
-  @Prop({type: Types.ObjectId, required: true})
-  _id: Types.ObjectId;
+
 
   @Prop({required: true })
   username: string;
@@ -28,7 +27,7 @@ export class User {
   @Prop({type:Boolean , required: true})
   isPrivate: boolean;
 
-  @Prop({type: Date, required: true})
+  @Prop({type: Date, required: true, default: Date.now  })
   createdAt: Date;
 
   @Prop()

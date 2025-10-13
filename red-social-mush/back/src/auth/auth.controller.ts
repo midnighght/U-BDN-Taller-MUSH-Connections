@@ -1,52 +1,77 @@
-import { Body, Controller, HttpCode, HttpStatus, NotImplementedException, Post, Get, UseGuards, Request } from '@nestjs/common';
+// src/auth/auth.controller.ts
+import { 
+    Body, 
+    Controller, 
+    HttpCode, 
+    HttpStatus, 
+    Post, 
+    Get, 
+    UseGuards, 
+    Request 
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guards';
-/*
+
 @Controller('auth')
 export class AuthController {
 
-    constructor(private authService: AuthService){}
+    constructor(private authService: AuthService) {}
 
+    // 👇 Login - Retorna token JWT
     @HttpCode(HttpStatus.OK)
     @Post('login')
-    login(@Body() input: { username: string; password: string }) {
-        return this.authService.authenticate(input);
-        
+    async login(@Body() input: { email: string; password: string }) {
+        const result = await this.authService.authenticate(input);
+        return {
+            message: 'Login successful',
+            access_token: result.accessToken, // 🔑 Token JWT aquí
+            user: {
+                id: result.userId,
+                username: result.username,
+                email: result.email,
+            }
+        };
     }
 
-    @UseGuards(AuthGuard)
+    // 👇 Registro - Retorna token JWT
+    @HttpCode(HttpStatus.CREATED)
+    @Post('register')
+    async register(@Body() input: { 
+        username: string; 
+        email: string;
+        password: string;
+        description?: string;
+        isPrivate?: boolean;
+    }) {
+        const result = await this.authService.register(input);
+        return {
+            message: 'User registered successfully',
+            access_token: result.accessToken, // 🔑 Token JWT aquí
+            user: {
+                id: result.userId,
+                username: result.username,
+                email: result.email,
+            }
+        };
+    }
+
+    // 👇 Ruta protegida - Usa el AuthGuard (valida token JWT)
+    @UseGuards(AuthGuard) // 🛡️ Protegido por JWT
     @Get('me')
-    getUserInfo(@Request() request){
-        return request.user;
-    }
-
-}*/
-
-
-@Controller('auth')
-export class AuthController {
-
-  // 🔥 ENDPOINT TEMPORAL PARA PROBAR
-  @Get('test')
-  async testConnection() {
-    return { 
-      message: '✅ Backend conectado correctamente',
-      timestamp: new Date().toISOString(),
-      status: 'active'
-    };
-  }
-
-  @Post('login')
-  async login(@Body() body: any) {
-    console.log('📨 Login recibido:', body);
-    return {
-      access_token: 'jwt-token-' + Date.now(),
-      user: {
-        id: '1',
-        email: body.email,
-        name: 'Usuario de Prueba',
-        avatar: null
+    async getUserInfo(@Request() request) {
+        const user = await this.authService['userModel'].findById(request.user.userId)
+            .select('-password');
+        if(user!=null){
+        return {
+          
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            description: user.description,
+            isPrivate: user.isPrivate,
+            lastLogin: user.lastLogin,
+            createdAt: user.createdAt,
+        };
       }
-    };
-  }
+    }
 }

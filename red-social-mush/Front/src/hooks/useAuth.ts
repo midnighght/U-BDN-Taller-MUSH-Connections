@@ -53,6 +53,22 @@ export const useAuth = () => {
     }
   };
 
+  const register = async (email: string, password: string, username: string) => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const result = await api.register(email, password, username);
+      return { success: true, data: result };
+      
+    } catch (err: any) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('auth_token');
     setUser(null);
@@ -65,6 +81,7 @@ export const useAuth = () => {
     error,
     login,
     logout,
+    register,
     isAuthenticated: !!user
   };
 };
