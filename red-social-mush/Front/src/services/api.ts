@@ -2,7 +2,7 @@ const API_BASE_URL = 'http://localhost:3000';
 
 export const api = {
  
-  // 🔥 SEGUNDO: Hacer login (POST correcto)
+  
   async login(email: string, password: string) {
     console.log('🔐 Preparando login para:', email);
   
@@ -60,5 +60,24 @@ export const api = {
     console.error("Error al registrar el usuario:", error);
     throw error;
   }
+},
+
+async obtainUserData(token: string) {
+  try {
+    const user = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    })
+    const userData = await user.json();
+    if (userData){
+    return userData;
+    }
+  } catch (error) {
+    console.error("Error al obtener los datos del usuario:", error);
+  }
+  
 }
 };

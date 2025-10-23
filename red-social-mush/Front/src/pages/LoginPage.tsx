@@ -16,9 +16,9 @@ const LoginPage = () => {
     if (result.success) {
       console.log('✅ Login exitoso');
       navigate('/home');
-      // La redirección es automática por el ProtectedRoute
+      
     } else {
-      console.log('❌ Error:', result.error);
+      console.log('Error:', result.error);
     }
   };
 
@@ -87,7 +87,7 @@ const LoginPage = () => {
 
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-700 text-center">
-            💡 Usa cualquier email y contraseña para probar
+            
           </p>
         </div>
       </div>

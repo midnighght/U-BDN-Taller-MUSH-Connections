@@ -5,42 +5,51 @@ const Header = () => {
 
   if (loading) {
     return (
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center">
-          <div className="animate-pulse bg-gray-200 h-6 w-32 rounded"></div>
+      <header className="bg-gradient-to-r from-orange-400 to-orange-600">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center">
+          <div className="animate-pulse bg-orange-200 h-6 w-32 rounded"></div>
         </div>
       </header>
     );
   }
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">M</span>
-            </div>
-            <span className="ml-2 text-xl font-bold text-gray-900">MiRedSocial</span>
+    <header className="bg-gradient-to-r from-orange-400 to-orange-600 text-white shadow">
+      <div className="max-w-7xl mx-auto flex justify-between items-center h-16 px-6">
+        
+        <div className="flex items-center space-x-2">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-300 flex items-center justify-center">
+            
+            { <img src="Front\src\assets\log-gato.png" alt="Logo" className="object-cover w-full h-full" /> }
           </div>
+        </div>
 
-          {/* Menú de usuario */}
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-3">
-                <span className="text-gray-700">Hola, {user.name}</span>
-                <button
-                  onClick={logout}
-                  className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            ) : (
-              <span className="text-gray-500">Inicia sesión</span>
-            )}
+        {/* BUSCADOR */}
+        <div className="flex-1 mx-8">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar..."
+              className="w-full bg-[#FFE0B2] text-gray-700 rounded-full py-2 pl-4 pr-10 placeholder-gray-500 focus:outline-none"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-600 text-xl">🔍</span>
           </div>
+        </div>
+
+        {/* ÍCONOS DE USUARIO */}
+        <div className="flex items-center space-x-4">
+          <button className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">👤</button>
+          <button className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">🔔</button>
+          {user ? (
+            <button
+              onClick={logout}
+              className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
+            >
+              🚪
+            </button>
+          ) : (
+            <span className="text-sm">Inicia sesión</span>
+          )}
         </div>
       </div>
     </header>

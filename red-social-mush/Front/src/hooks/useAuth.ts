@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
 // Definimos el tipo de usuario
@@ -10,6 +11,7 @@ interface User {
 }
 
 export const useAuth = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -18,12 +20,26 @@ export const useAuth = () => {
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (token) {
-      // Simulamos un usuario existente (luego lo traeremos del backend)
-      setUser({
-        id: '1',
-        email: 'usuario@existente.com',
-        name: 'Usuario Existente'
-      });
+      // Hacer un fetch con la info del usuario
+      const fetchUser = async () => {
+        try {
+          const response = await api.obtainUserData(token);
+          if (response !=  null){
+            console.log('token existente' + token + '  usuario:' + response.name);
+
+            setUser(response.user);
+            navigate('/home');
+          }
+          
+        } catch (err: any) {
+          setError(err.message);
+          navigate('/login');
+        }
+      }
+      fetchUser();
+
+    }else if (token == null){
+      navigate('/login');
     }
     setLoading(false);
   }, []);
@@ -73,6 +89,7 @@ export const useAuth = () => {
     localStorage.removeItem('auth_token');
     setUser(null);
     setError('');
+    navigate('/login');
   };
 
   return {
