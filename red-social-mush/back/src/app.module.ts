@@ -10,6 +10,8 @@ import { CommentsController } from './comments/comments.controller';
 import { CommentsService } from './comments/comments.service';
 import { CommentsModule } from './comments/comments.module';
 import { RegistrationModule } from './registration/registration.module';
+import { UploadService } from './upload/upload.service';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
    imports: [
@@ -20,8 +22,9 @@ import { RegistrationModule } from './registration/registration.module';
     CommunitiesModule,
     CommentsModule,
     RegistrationModule,
+    UploadModule,
   ],
   controllers: [AppController, CommentsController],
-  providers: [AppService, CommentsService],
+  providers: [AppService, CommentsService, UploadService],
 })
 export class AppModule {}

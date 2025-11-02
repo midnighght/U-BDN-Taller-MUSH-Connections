@@ -8,7 +8,6 @@ export type UserDocument = User & Document;
 export class User {
 
 
-
   @Prop({required: true })
   username: string;
 

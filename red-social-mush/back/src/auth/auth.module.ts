@@ -12,9 +12,9 @@ import { JWT_SECRET } from 'src/configs/jwt-secret';
     imports: [
         UsersModule,
         JwtModule.register({
-            global: true, // 👈 JWT disponible globalmente
-            secret: JWT_SECRET, // 🔑 Secret para firmar tokens
-            signOptions: { expiresIn: '1d' }, // ⏰ Tokens expiran en 1 día
+            global: true, 
+            secret: JWT_SECRET, 
+            signOptions: { expiresIn: '1d' }, 
         }),
     ],
 })

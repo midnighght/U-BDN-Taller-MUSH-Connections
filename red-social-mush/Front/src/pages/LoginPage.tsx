@@ -76,20 +76,17 @@ const LoginPage = () => {
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
-
-     <button
+          
+        <button
           className="w-full mt-4 bg-gray-200 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
           type="button"
-          onClick={() => navigate('/RegisterPage')}
-        >
+          onClick={() => {
+            navigate("/RegisterPage");
+}}>
           Registrarse
         </button>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-700 text-center">
-            
-          </p>
-        </div>
+        
       </div>
     </div>
   );

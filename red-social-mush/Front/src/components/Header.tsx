@@ -1,8 +1,21 @@
 import { useAuth } from '../hooks/useAuth';
-
+import logoGato from '../assets/logo-gato.png';
+import { useNavigate } from 'react-router-dom';
 const Header = () => {
   const { user, logout, loading } = useAuth();
+  const navigate = useNavigate();
 
+  const redirectProfilePage = () => {
+  return () => {
+    navigate("/profile");
+    return true;
+  };
+}
+ const redirectHomePage = () => {
+  
+    navigate("/home");
+    
+};
   if (loading) {
     return (
       <header className="bg-gradient-to-r from-orange-400 to-orange-600">
@@ -11,6 +24,7 @@ const Header = () => {
         </div>
       </header>
     );
+
   }
 
   return (
@@ -18,9 +32,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto flex justify-between items-center h-16 px-6">
         
         <div className="flex items-center space-x-2">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-300 flex items-center justify-center">
-            
-            { <img src="Front\src\assets\log-gato.png" alt="Logo" className="object-cover w-full h-full" /> }
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-300 flex items-center justify-center">     
+             <img onClick ={redirectHomePage} src={logoGato} alt="Logo" className="object-cover w-full h-full" /> 
           </div>
         </div>
 
@@ -38,18 +51,15 @@ const Header = () => {
 
         {/* ÍCONOS DE USUARIO */}
         <div className="flex items-center space-x-4">
-          <button className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">👤</button>
+          <button onClick={redirectProfilePage()} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">👤</button>
           <button className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">🔔</button>
-          {user ? (
+          
             <button
               onClick={logout}
               className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
             >
               🚪
-            </button>
-          ) : (
-            <span className="text-sm">Inicia sesión</span>
-          )}
+             </button>
         </div>
       </div>
     </header>

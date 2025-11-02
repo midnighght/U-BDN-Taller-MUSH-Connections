@@ -4,30 +4,30 @@ import type { Date } from 'mongoose';
 
 
 export type PostDocument = Post & Document;
-@Schema()
+
+@Schema({timestamps:true})
 export class Post {
-  @Prop({ type: Types.ObjectId, required:true})
-  _id: Types.ObjectId;
+  
 
   @Prop({ type: Types.ObjectId, required: true })
   authorID: Types.ObjectId;
 
-  @Prop()
-  textBody?: string;
+  @Prop({type : String})
+  textBody: string;
 
   @Prop({ required: true })
   mediaURL: string;
 
-  @Prop({ type: [Types.ObjectId], default: [] })
-  usertags: Types.ObjectId[];
+  @Prop({ type: [String], default: [] })
+  usertags: String[];
 
   @Prop({ type: [String], default: [] })
   hashtags: string[];
 
-  @Prop()
-  comunityID?: string;
+  @Prop({type:String})
+  comunityID: string;
 
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number, default: 0 })
   reactionScore: number;
 
   @Prop({ type: [Types.ObjectId], default: [] })
@@ -36,10 +36,10 @@ export class Post {
   @Prop({ type: [Types.ObjectId], default: [] })
   reactionDown: Types.ObjectId[];
 
-  @Prop({ type: Date,required: true })
+  @Prop({ type: Date,required: true, default: Date.now })
   createdAt: Date;
 
-  @Prop({ type:Boolean,required: true })
+  @Prop({ type:Boolean,required: true, default: false })
   isEdited: boolean;
 }
 

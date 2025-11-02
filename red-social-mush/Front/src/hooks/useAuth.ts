@@ -6,8 +6,9 @@ import { api } from '../services/api';
 interface User {
   id: string;
   email: string;
-  name: string;
+  username: string;
   avatar?: string;
+  token: string
 }
 
 export const useAuth = () => {
@@ -25,23 +26,24 @@ export const useAuth = () => {
         try {
           const response = await api.obtainUserData(token);
           if (response !=  null){
-            console.log('token existente' + token + '  usuario:' + response.name);
+            console.log('token existente ' + token + '  usuario:' + response.username);
 
-            setUser(response.user);
-            navigate('/home');
+            setUser(response);
+            setLoading(false);
           }
           
         } catch (err: any) {
           setError(err.message);
-          navigate('/login');
+          setLoading(false);
+          navigate('/');
         }
       }
       fetchUser();
-
-    }else if (token == null){
-      navigate('/login');
+      
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
+    
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -57,7 +59,7 @@ export const useAuth = () => {
       }
       
       // Guardar el usuario
-      setUser(result.user);
+      setUser(result);
       
       return { success: true, data: result };
       
@@ -86,10 +88,11 @@ export const useAuth = () => {
   };
 
   const logout = () => {
+    
     localStorage.removeItem('auth_token');
     setUser(null);
     setError('');
-    navigate('/login');
+    navigate('/');
   };
 
   return {

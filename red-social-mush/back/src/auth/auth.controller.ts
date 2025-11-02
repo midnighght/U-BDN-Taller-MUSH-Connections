@@ -17,14 +17,14 @@ export class AuthController {
 
     constructor(private authService: AuthService) {}
 
-    // 👇 Login - Retorna token JWT
+    
     @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(@Body() input: { email: string; password: string }) {
         const result = await this.authService.authenticate(input);
         return {
             message: 'Login successful',
-            access_token: result.accessToken, // 🔑 Token JWT aquí
+            access_token: result.accessToken, 
             user: {
                 id: result.userId,
                 username: result.username,
@@ -46,7 +46,7 @@ export class AuthController {
         const result = await this.authService.register(input);
         return {
             message: 'User registered successfully',
-            access_token: result.accessToken, // 🔑 Token JWT aquí
+            access_token: result.accessToken, 
             user: {
                 id: result.userId,
                 username: result.username,
@@ -55,8 +55,8 @@ export class AuthController {
         };
     }
 
-    // 👇 Ruta protegida - Usa el AuthGuard (valida token JWT)
-    @UseGuards(AuthGuard) // 🛡️ Protegido por JWT
+    
+    @UseGuards(AuthGuard) 
     @Get('me')
     async getUserInfo(@Request() request) {
         const user = await this.authService['userModel'].findById(request.user.userId)

@@ -1,7 +1,12 @@
 import Header from '../components/Header';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+
+import PostCard from '../components/PostCard';
+
 const HomePage = () => {
+  const user = useAuth();
+  console.log("Usuario en HomePage:", user);
   return (
     <div className="min-h-screen bg-[#fff8f5] flex flex-col">
       {/* HEADER */}
@@ -30,6 +35,8 @@ const HomePage = () => {
 
         {/* === COLUMNA CENTRAL: PUBLICACIONES === */}
         <section className="flex-1 space-y-8">
+          
+            <PostCard />  
           {[1, 2].map((post) => (
             <div key={post} className="bg-white rounded-3xl shadow p-5">
               {/* Usuario */}

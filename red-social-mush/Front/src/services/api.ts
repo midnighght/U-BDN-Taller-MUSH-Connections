@@ -79,5 +79,9 @@ async obtainUserData(token: string) {
     console.error("Error al obtener los datos del usuario:", error);
   }
   
-}
+},
+//taggedUsers y Hashtags hay que separarlos. Deberia enviar el token o id del usuario?
+
+
+  
 };
