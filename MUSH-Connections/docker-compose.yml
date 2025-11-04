@@ -1,0 +1,62 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:7
+    container_name: mush-mongo
+    restart: unless-stopped
+    ports:
+      - "38130:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mush
+      MONGO_INITDB_ROOT_PASSWORD: password1234
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - app-network
+
+  neo4j: 
+    image: neo4j:5
+    container_name: mush-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/password1234
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-data:/data
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./Backend
+    env_file:
+      - ./Backend/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - neo4j
+    networks:
+      - app-network
+
+  # frontend:
+  #   build:
+  #     context: ./Frontend
+  #   env_file:
+  #     - ./Frontend/.env
+  #   ports:
+  #     - "8080:80"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - app-network
+
+volumes:
+  mongo_data:
+  neo4j-data:
+
+networks:
+  app-network:
+    driver: bridge

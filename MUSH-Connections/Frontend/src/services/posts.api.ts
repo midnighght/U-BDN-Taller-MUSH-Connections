@@ -36,7 +36,7 @@ async createPost(image:string, description: string, taggedUsers: string, hashtag
   return false;
   },
 
-   async  obtainUserPosts(token:string) {
+  async  obtainUserPosts(token:string) {
     
   try {
     const response = await fetch(`${API_BASE_URL}/posts/userPosts`, {
