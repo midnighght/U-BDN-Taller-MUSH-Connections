@@ -2,7 +2,7 @@ import { Controller, Post, UseGuards, Body, Request, Param, Get, ConsoleLogger }
 import { AuthGuard } from 'src/auth/guards/auth.guards';
 import { PostsService } from './posts.service';
 import { UploadService } from 'src/upload/upload.service';
-
+import {CreatePostDTO} from './dto/posts.dto';
 @Controller('posts')
 export class PostsController {
     constructor(private postsService: PostsService,
@@ -12,18 +12,16 @@ export class PostsController {
 
     @Post('createPost')
     @UseGuards(AuthGuard)
-    async createPost(@Body() input: { image: string;
-        description: String;
-        taggedUsers: String;
-        hashtags: String;
-        userId: String },  @Request() req){
+    async createPost(@Body() createPostDto: CreatePostDTO,  @Request() req){
+
+
         const userId = req.user.userId;
-        
-        input.userId = userId;
-        const imageBase64 = input.image;
+        createPostDto.userId = userId;
+        console.log(createPostDto.image);
+        const imageBase64 =createPostDto.image.toString(); 
         const imagePath = await this.uploadService.saveImageBase64(imageBase64);
-        input.image = imagePath;
-        const result = await this.postsService.createPostInDb(input);
+        createPostDto.image = imagePath;
+        const result = await this.postsService.createPostInDb(createPostDto);
         return result;
     }
 

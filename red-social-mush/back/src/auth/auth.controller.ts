@@ -1,4 +1,4 @@
-// src/auth/auth.controller.ts
+
 import { 
     Body, 
     Controller, 
@@ -9,6 +9,7 @@ import {
     UseGuards, 
     Request 
 } from '@nestjs/common';
+import { loginDTO, loginResponseDTO, registerDTO } from './dto/auth.dto';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guards';
 
@@ -20,39 +21,17 @@ export class AuthController {
     
     @HttpCode(HttpStatus.OK)
     @Post('login')
-    async login(@Body() input: { email: string; password: string }) {
-        const result = await this.authService.authenticate(input);
-        return {
-            message: 'Login successful',
-            access_token: result.accessToken, 
-            user: {
-                id: result.userId,
-                username: result.username,
-                email: result.email,
-            }
-        };
+    async login(@Body() loginDTO:loginDTO) {
+        return await this.authService.authenticate(loginDTO);
+    
     }
 
     // 👇 Registro - Retorna token JWT
     @HttpCode(HttpStatus.CREATED)
     @Post('register')
-    async register(@Body() input: { 
-        username: string; 
-        email: string;
-        password: string;
-        description?: string;
-        isPrivate?: boolean;
-    }) {
-        const result = await this.authService.register(input);
-        return {
-            message: 'User registered successfully',
-            access_token: result.accessToken, 
-            user: {
-                id: result.userId,
-                username: result.username,
-                email: result.email,
-            }
-        };
+    async register(@Body() registerDTO:registerDTO) {
+        return await this.authService.register(registerDTO);
+        
     }
 
     

@@ -1,3 +1,4 @@
+import type { CreatePostDTO } from "./dto/posts.api.dto.ts";  
 const API_BASE_URL = 'http://localhost:3000';
 
 export const posts_api = {
@@ -11,6 +12,13 @@ async createPost(image:String, description: String, taggedUsers: String, hashtag
   const splitHashtag = noSpacesHashtags.split("#");
   splitHashtag.splice(0,1);
 
+
+  const postData: CreatePostDTO = {
+        image: image, 
+        description: description, 
+        taggedUsers: splitTaggedUser,
+        hashtags: splitHashtag,
+  }
   try {
     const response =  await fetch(`${API_BASE_URL}/posts/createPost`, {
       method: 'POST',
@@ -18,16 +26,10 @@ async createPost(image:String, description: String, taggedUsers: String, hashtag
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ 
-        image: image, 
-        description: description, 
-        taggedUsers: splitTaggedUser,
-        hashtags: splitHashtag,
-        
-      }),
+      body: JSON.stringify(postData
+      ),
     });
     if (response.ok){
-      console.log('metodo api ok')
       return response.ok;
     } 
   }catch (error) {
@@ -49,7 +51,6 @@ async createPost(image:String, description: String, taggedUsers: String, hashtag
 
     if (response.ok) {
       const data = await response.json();
-      
       return data;
     }
 

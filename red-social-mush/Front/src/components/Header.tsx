@@ -12,9 +12,7 @@ const Header = () => {
   };
 }
  const redirectHomePage = () => {
-  
-    navigate("/home");
-    
+  navigate("/home");
 };
   if (loading) {
     return (
@@ -57,9 +55,8 @@ const Header = () => {
             <button
               onClick={logout}
               className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
-            >
-              🚪
-             </button>
+            >🚪
+            </button>
         </div>
       </div>
     </header>

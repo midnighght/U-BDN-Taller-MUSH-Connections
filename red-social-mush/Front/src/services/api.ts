@@ -1,3 +1,4 @@
+import type{ loginDTO,  registerDTO } from './dto/api.dto';
 const API_BASE_URL = 'http://localhost:3000';
 
 export const api = {
@@ -5,7 +6,7 @@ export const api = {
   
   async login(email: string, password: string) {
     console.log('🔐 Preparando login para:', email);
-  
+    const credentials: loginDTO = { email:email, password:password };
     try {
       console.log('📨 Enviando petición POST a /auth/login...');
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -13,10 +14,7 @@ export const api = {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          email: email, 
-          password: password 
-        }),
+        body: JSON.stringify(credentials),
       });
 
       console.log('📡 Respuesta recibida. Status:', response.status);
@@ -36,17 +34,14 @@ export const api = {
   },
 
   async register(email: string, password: string, username: string) {
+  const credentials: registerDTO = { email: email, password: password, username:username };
   try {
     const result = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
-        username: username, 
-        email: email, 
-        password: password,
-      }),
+      body: JSON.stringify(credentials),
     });
 
     if (!result.ok) {

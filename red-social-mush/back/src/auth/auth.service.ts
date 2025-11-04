@@ -1,48 +1,47 @@
 // src/auth/auth.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Body} from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { loginDTO, loginResponseDTO, registerDTO, signInDTO } from './dto/auth.dto';
 
-type AuthInput = { email: string; password: string };
 type SignInData = { userId: string; username: string; email: string };
-type AuthResult = { accessToken: string; userId: string; username: string; email: string };
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
-        private jwtService: JwtService, // 👈 JWT Service para tokens
+        private jwtService: JwtService, 
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>
     ) {}
      
-    // 👇 Login - Genera token JWT
-    async authenticate(input: AuthInput): Promise<AuthResult> {
-        const user = await this.validateUser(input);
+    
+    async authenticate(@Body() loginDTO: loginDTO): Promise<loginResponseDTO> {
+        const user = await this.validateUser(loginDTO);
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
         
-        // Actualizar último login
+        
         await this.userModel.findByIdAndUpdate(user.userId, { 
             lastLogin: new Date() 
         });
         
-        return this.signIn(user); // 👈 Retorna con token
+        return this.signIn(user); 
     }
 
-    async validateUser(input: AuthInput): Promise<SignInData | null> {
-        const user = await this.userModel.findOne({ email: input.email });
+    async validateUser(@Body() loginDTO: loginDTO): Promise<SignInData | null> {
+        const user = await this.userModel.findOne({ email: loginDTO.email});
 
         if (!user) {
             return null;
         }
 
         // Comparar contraseña hasheada
-        const isPasswordValid = await bcrypt.compare(input.password, user.password);
+        const isPasswordValid = await bcrypt.compare(loginDTO.password, user.password);
         
         if (isPasswordValid) {
             return {
@@ -55,59 +54,54 @@ export class AuthService {
         return null;
     }
 
-    // 👇 Genera el token JWT (ya lo tenías)
-    async signIn(user: SignInData): Promise<AuthResult> {
+    
+    async signIn(@Body() user: signInDTO): Promise<loginResponseDTO> {
         const tokenPayload = {
             sub: user.userId,
             username: user.username,
             email: user.email,
         };
 
-        // 🔑 Genera el token JWT
-        const accessToken = await this.jwtService.signAsync(tokenPayload);
         
+        const accessToken = await this.jwtService.signAsync(tokenPayload);
         return { 
-            accessToken, // 👈 Token JWT
-            username: user.username, 
-            userId: user.userId,
-            email: user.email 
+            access_token:accessToken, 
+            user : {
+                id: user.userId,
+                username: user.username,
+                email: user.email
+            }
         };
     }
 
-    // 👇 Registro - También genera token JWT
-    async register(userData: {
-        username: string;
-        email: string;
-        password: string;
-        description?: string;
-        isPrivate?: boolean;
-    }): Promise<AuthResult> {
+    
+    async register(@Body() registerDTO:registerDTO): Promise<loginResponseDTO> {
         // Verificar si el usuario ya existe
         const existingUser = await this.userModel.findOne({
-            $or: [{ email: userData.email }, { username: userData.username }]
+            $or: [{ email: registerDTO.email }, { username: registerDTO.username }]
         });
 
         if (existingUser) {
-            if (existingUser.email === userData.email) {
+            if (existingUser.email === registerDTO.email) {
                 throw new UnauthorizedException('Email already exists');
             }
             throw new UnauthorizedException('Username already exists');
         }
 
         // Hash de la contraseña
-        const hashedPassword = await bcrypt.hash(userData.password, 10);
+        const hashedPassword = await bcrypt.hash(registerDTO.password, 10);
 
         // Crear usuario
         const user = new this.userModel({
-            ...userData,
+            ...registerDTO,
             password: hashedPassword,
-            isPrivate: userData.isPrivate || false,
+            isPrivate: registerDTO.isPrivate || false,
             
         });
 
         const savedUser = await user.save();
 
-        // 👇 Retorna con token JWT
+        
         return this.signIn({
             userId: savedUser.id,
             username: savedUser.username,
@@ -115,7 +109,7 @@ export class AuthService {
         });
     }
 
-    // 👇 NUEVO: Validar token (útil para después)
+    
     async validateToken(token: string) {
         try {
             const payload = await this.jwtService.verifyAsync(token);
