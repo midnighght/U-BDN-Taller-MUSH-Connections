@@ -2,114 +2,200 @@ import Header from '../components/Header';
 import { posts_api } from '../services/posts.api.ts';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-const API_BASE_URL = 'http://localhost:3000';
 
-//Falta obtener posts del usuario.
-const ProfilePage = () =>{
-    const {user} = useAuth();
- const [posts, setPosts] = useState([]);
+const ProfilePage = () => {
+  const { user, logout } = useAuth();
+  const [posts, setPosts] = useState([]);
+  const [isEditOpen, setEditOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [bio, setBio] = useState('');
+  const [profilePic, setProfilePic] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   const token = localStorage.getItem('auth_token');
- useEffect(() => {
-    const fetchPosts = async () => {
-  try {
-    if (!token) {
-      console.error('Token is null');
-      return;
-    }
-    const response = await posts_api.obtainUserPosts(token);
-    
-    console.log(response);
-    setPosts(response);
-      
-    
-  } catch (error) {
-    console.error('Error:', error);
-  }
-};
 
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        if (!token) return console.error('Token is null');
+        const response = await posts_api.obtainUserPosts(token);
+        setPosts(response);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
     fetchPosts();
   }, [user?.id]);
 
-return (
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setProfilePic(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleDeleteAccount = () => {
+    if (confirm('¿Seguro que deseas borrar tu cuenta? Esta acción es irreversible.')) {
+      logout();
+      alert('Cuenta eliminada');
+    }
+  };
+
+  return (
     <div className="min-h-screen bg-[#fff8f5] flex flex-col">
-      {/* HEADER */}
       <Header />
-    <div className="min-h-screen bg-gradient-to-b from-orange-100 to-yellow-100 p-6">
-      <div className="max-w-6xl mx-auto flex gap-8">
-{/* Panel izquierdo */}
-    <aside className="w-80 bg-transparent">
-    <div className="bg-orange-200 rounded-2xl p-6 shadow-inner">
-    <div className="flex flex-col items-center">
-    <div className="w-32 h-32 rounded-full bg-white/60 shadow-md flex items-center justify-center mb-4">
-    <span className="text-4xl text-orange-600">👤</span>
-    </div>
-    <h2 className="text-2xl font-extrabold text-orange-700 mb-3">{user?.username}</h2>
+      <div className="min-h-screen bg-gradient-to-b from-orange-100 to-yellow-100 p-6">
+        <div className="max-w-6xl mx-auto flex gap-8">
 
+          {/* Panel izquierdo */}
+          <aside className="w-80 bg-transparent">
+            <div className="bg-orange-200 rounded-2xl p-6 shadow-inner">
+              <div className="flex flex-col items-center">
+                <div className="w-32 h-32 rounded-full bg-white/60 shadow-md flex items-center justify-center mb-4 overflow-hidden">
+                  {profilePic ? (
+                    <img src={profilePic} alt="perfil" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-4xl text-orange-600">👤</span>
+                  )}
+                </div>
 
-<div className="flex gap-3 mb-4">
-<button className="px-4 py-2 rounded-lg bg-white text-orange-700 shadow-sm">Ajustes</button>
-<button className="px-4 py-2 rounded-lg bg-white text-orange-700 shadow-sm">Editar perfil</button>
-</div>
+                <h2 className="text-2xl font-extrabold text-orange-700 mb-3">{user?.username}</h2>
 
+                <div className="flex gap-3 mb-4">
+                  <button
+                    onClick={() => setSettingsOpen(true)}
+                    className="px-4 py-2 rounded-lg bg-white text-orange-700 shadow-sm hover:bg-orange-100 transition">
+                    Ajustes
+                  </button>
+                  <button
+                    onClick={() => setEditOpen(true)}
+                    className="px-4 py-2 rounded-lg bg-white text-orange-700 shadow-sm hover:bg-orange-100 transition">
+                    Editar perfil
+                  </button>
+                </div>
 
-<div className="w-full bg-white rounded-lg p-4 mb-4 shadow">
-<p className="text-sm text-gray-600 leading-5">Breve bio o descripción del usuario. Aquí puede ir información corta sobre gustos, ubicación o estado.</p>
-</div>
+                <div className="w-full bg-white rounded-lg p-4 mb-4 shadow">
+                  <p className="text-sm text-gray-600 leading-5">
+                    {bio || 'Breve bio o descripción del usuario.'}
+                  </p>
+                </div>
 
+                <div className="grid grid-cols-3 gap-3 w-full">
+                  <div className="bg-white rounded-lg p-3 text-center shadow">
+                    <div className="text-sm text-gray-500">Amigos</div>
+                    <div className="font-bold text-lg">100k</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 text-center shadow">
+                    <div className="text-sm text-gray-500">Posts</div>
+                    <div className="font-bold text-lg">{posts.length}</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 text-center shadow">
+                    <div className="text-sm text-gray-500">Comunidades</div>
+                    <div className="font-bold text-lg">3</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
 
-      <div className="grid grid-cols-3 gap-3 w-full">
-        <div className="bg-white rounded-lg p-3 text-center shadow">
-        <div className="text-sm text-gray-500">Amigos</div>
-        <div className="font-bold text-lg">100k</div>
-      </div>
-      <div className="bg-white rounded-lg p-3 text-center shadow">
-        <div className="text-sm text-gray-500">Posts</div>
-        <div className="font-bold text-lg">{posts.length}</div>
-      </div>
-      <div className="bg-white rounded-lg p-3 text-center shadow">
-        <div className="text-sm text-gray-500">Comunidades</div>
-        <div className="font-bold text-lg">3</div>
-      </div>
-</div>
-</div>
-</div>
-
-
-{/* Espacio inferior */}
-<div className="mt-6 h-40 rounded-2xl bg-transparent" />
-</aside>
-
-
-{/* Feed principal */}
- <section className="flex-1">
+          {/* Feed principal */}
+          <section className="flex-1">
             <div className="grid grid-cols-2 gap-6">
-              {posts.map(({mediaURL, textBody  }) => (
-                <article  className="bg-white rounded-2xl shadow-md p-4">
+              {posts.map(({ mediaURL, textBody }, i) => (
+                <article key={i} className="bg-white rounded-2xl shadow-md p-4">
                   <header className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">👤</div>
                     <h3 className="text-lg text-gray-600 font-semibold">{user?.username}</h3>
                   </header>
 
-                  {/* ✅ Imagen del post */}
                   <div className="bg-orange-100 rounded-lg h-40 mb-3 overflow-hidden">
-                    <img 
-                      src={mediaURL}
-                      alt="Post"
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={mediaURL} alt="Post" className="w-full h-full object-cover" />
                   </div>
 
-                  {/* ✅ Descripción del post */}
-                  <p className="text-sm text-gray-500 line-clamp-3">
-                    {textBody || 'Sin descripción'}
-                  </p>
+                  <p className="text-sm text-gray-500 line-clamp-3">{textBody || 'Sin descripción'}</p>
                 </article>
               ))}
             </div>
           </section>
-</div>
-</div>
-</div>
-);
+        </div>
+      </div>
+
+      {/* --- MODAL EDITAR PERFIL (versión anterior) --- */}
+      {isEditOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 backdrop-blur-sm">
+          <div className="bg-gradient-to-b from-orange-50 to-yellow-50 p-8 rounded-3xl shadow-2xl w-[420px] text-center relative">
+            <button
+              onClick={() => setEditOpen(false)}
+              className="absolute top-3 right-4 text-gray-500 text-xl hover:text-gray-700">
+              ×
+            </button>
+
+            <h2 className="text-2xl font-bold text-orange-700 mb-6">Editar Perfil</h2>
+
+            <div className="flex flex-col items-center mb-4">
+              <div className="w-32 h-32 rounded-full bg-orange-100 shadow-inner mb-4 overflow-hidden flex items-center justify-center">
+                {profilePic ? (
+                  <img src={profilePic} alt="preview" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-4xl text-orange-600">📷</span>
+                )}
+              </div>
+
+              <label className="cursor-pointer text-sm text-orange-600 font-semibold hover:underline">
+                Cambiar imagen
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+              </label>
+            </div>
+
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Escribe una breve descripción..."
+              className="w-full h-24 border border-orange-200 rounded-xl p-3 text-sm text-gray-700 focus:ring-2 focus:ring-orange-300 mb-4 resize-none"
+            />
+
+            <button
+              onClick={() => setEditOpen(false)}
+              className="w-full py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow transition">
+              Guardar cambios
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL AJUSTES (igual que antes) --- */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-[400px] relative">
+            <button onClick={() => setSettingsOpen(false)} className="absolute top-2 right-3 text-gray-500 text-xl">×</button>
+            <h2 className="text-xl font-bold text-orange-700 mb-4">Ajustes</h2>
+
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-gray-700">Perfil privado</span>
+              <input
+                type="checkbox"
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate(e.target.checked)}
+                className="w-5 h-5 accent-orange-500"
+              />
+            </div>
+
+            <button
+              onClick={handleDeleteAccount}
+              className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg mb-3 shadow transition">
+              Borrar cuenta
+            </button>
+
+            <button
+              onClick={logout}
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg shadow transition">
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
-export default ProfilePage
+
+export default ProfilePage;
