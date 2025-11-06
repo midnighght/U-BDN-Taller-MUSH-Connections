@@ -5,8 +5,8 @@ services:
     container_name: mush-mongodb
     restart: unless-stopped
     ports:
-      - "38130:27017"
       - "27017:27017"
+      - "38130:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: mush
       MONGO_INITDB_ROOT_PASSWORD: password1234
