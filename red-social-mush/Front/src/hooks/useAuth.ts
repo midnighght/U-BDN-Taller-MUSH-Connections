@@ -98,7 +98,6 @@ export const useAuth = () => {
       setLoading(false);
     }
   };
-
   const logout = () => {
     
     localStorage.removeItem('auth_token');

@@ -14,11 +14,17 @@ export class UsersService {
             await this.userModel.findByIdAndUpdate(userId, {$set: description});
             
         }
-       async updatePhoto(userPhoto: String, userId: String) {
+        async updatePhoto(userPhoto: String, userId: String) {
             const imageBase64 =userPhoto.toString(); 
             const imagePath = await this.uploadService.saveImageBase64(imageBase64);
             userPhoto = imagePath;
             await this.userModel.findByIdAndUpdate(userId, {$set: userPhoto});
         }
         
+        async deleteAccount(userId: String) {
+            await this.userModel.findByIdAndDelete(userId)
+        }
+        async userUpdatePrivacy(isPrivate: boolean, userId: any) {
+            await this.userModel.findByIdAndUpdate(userId, {isPrivate});
+        }
 }

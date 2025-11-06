@@ -3,6 +3,7 @@ import { posts_api } from '../services/posts.api.ts';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api.ts';
+import { useNavigate } from 'react-router-dom';
 const ProfilePage = () => {
   const { user, logout } = useAuth();
   const [posts, setPosts] = useState([]);
@@ -18,7 +19,7 @@ const ProfilePage = () => {
   const [bio, setBio] = useState('');
   // Imagen de perfil guardado del usuario
   const [profilePic, setProfilePic] = useState('');
-
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -26,6 +27,8 @@ const ProfilePage = () => {
         const response = await api.obtainUserData(token);
         setBio(response.description);
         setProfilePic(response.userPhoto);
+        setIsPrivate(response.isPrivate);
+        console.log('privacidad al hacer fetch: ', response.isPrivate);
       } catch (error) {
         console.error('Error:', error);
       }
@@ -47,6 +50,22 @@ const ProfilePage = () => {
     fetchPosts();
   }, [user?.id]);
 
+  
+    const handlePrivacyChange = async (privacy: boolean) => {
+      console.log(isPrivate);
+      setIsPrivate(privacy);
+      console.log('Al hacer el cambio ', isPrivate);
+      try {
+        if (!token) return console.error('Token is null');
+        await api.updateAccountPrivacy(token, privacy);
+  
+
+      } catch (error) {
+        console.error('Error:', error);
+        setIsPrivate(!privacy);
+      }
+    };
+   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     console.log(file);
@@ -56,10 +75,12 @@ const ProfilePage = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     if (confirm('¿Seguro que deseas borrar tu cuenta? Esta acción es irreversible.')) {
-      logout();
+      if (!token) return;
+      await api.deleteAccount(token);
       alert('Cuenta eliminada');
+      navigate('/');
     }
   };
 
@@ -198,7 +219,7 @@ const ProfilePage = () => {
             </div>
 
             <textarea
-              value={bio}
+              value={newBio}
               onChange={(e) => setNewBio(e.target.value)}
               placeholder="Escribe una breve descripción..."
               className="w-full h-24 border border-orange-200 rounded-xl p-3 text-sm text-gray-700 focus:ring-2 focus:ring-orange-300 mb-4 resize-none"
@@ -228,7 +249,7 @@ const ProfilePage = () => {
               <input
                 type="checkbox"
                 checked={isPrivate}
-                onChange={(e) => setIsPrivate(e.target.checked)}
+                onChange={(e) => handlePrivacyChange(e.target.checked)}
                 className="w-5 h-5 accent-orange-500"
               />
             </div>

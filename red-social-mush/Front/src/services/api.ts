@@ -59,7 +59,7 @@ export const api = {
 
  async obtainUserData(token: string) {
     try {
-      console.log('👤 Obteniendo datos del usuario...');
+      
       
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
@@ -71,7 +71,7 @@ export const api = {
 
       // Si el token es inválido o expiró
       if (response.status === 401) {
-        console.warn('⚠️ Token inválido o expirado');
+       
         return null;
       }
 
@@ -106,7 +106,7 @@ export const api = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(userPhoto),
+        body: JSON.stringify({userPhoto}),
       });
         if (response.ok){
           return true;
@@ -120,6 +120,7 @@ export const api = {
   },
 
   async updateDescription(description:String, token:String): Promise <Boolean>{
+
       try {
         const response = await fetch(`${API_BASE_URL}/users/update-bio`, {
         method: 'PATCH',
@@ -127,7 +128,7 @@ export const api = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(description),
+        body: JSON.stringify({description}),
       });
         if (response.ok){
           return true;
@@ -137,6 +138,53 @@ export const api = {
         return false;
       }
       return false;
-  }
+  },
   
+  async deleteAccount(token: String){
+    try {
+        const url = `${API_BASE_URL}/users/delete-account`;
+       
+        
+        const response = await fetch(url, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+        });
+        
+        console.log('Status:', response.status);
+        
+        if (response.ok){
+          return true;
+        } else {
+          console.log('Error response:', await response.text());
+        }
+      } catch (error) {
+        console.error("Error al eliminar cuenta:", error);
+        return false;
+      }
+      return false;
+  },
+
+
+  async updateAccountPrivacy(token:String, isPrivate: boolean) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/privacy`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+         body: JSON.stringify({ isPrivate }),
+      });
+        if (response.ok){
+          return;
+        }
+      } catch (error) {
+        console.error("Error al actualizar la descripcion del usuario:", error);
+        return;
+      }
+      return ;
+
+  }
 };
