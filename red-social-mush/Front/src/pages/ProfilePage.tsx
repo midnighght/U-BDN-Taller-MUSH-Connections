@@ -2,22 +2,43 @@ import Header from '../components/Header';
 import { posts_api } from '../services/posts.api.ts';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-
+import { api } from '../services/api.ts';
 const ProfilePage = () => {
   const { user, logout } = useAuth();
   const [posts, setPosts] = useState([]);
   const [isEditOpen, setEditOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
-  const [bio, setBio] = useState('');
-  const [profilePic, setProfilePic] = useState('');
+  // Bio que quiere cambiar el usuario
+  const [newBio, setNewBio] = useState('');
+  // Imagen de perfil que quiere cambiar el usuario
+  const [newProfilePic, setNewProfilePic] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const token = localStorage.getItem('auth_token');
+  // Bio que tiene guardado del usuario
+  const [bio, setBio] = useState('');
+  // Imagen de perfil guardado del usuario
+  const [profilePic, setProfilePic] = useState('');
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        if (!token) return console.error('Token is null');
+        const response = await api.obtainUserData(token);
+        setBio(response.description);
+        setProfilePic(response.userPhoto);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    fetchUserData();
+  }, [user?.id, newProfilePic]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         if (!token) return console.error('Token is null');
         const response = await posts_api.obtainUserPosts(token);
+        console.log('posts: ',response);
         setPosts(response);
       } catch (error) {
         console.error('Error:', error);
@@ -28,9 +49,10 @@ const ProfilePage = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    console.log(file);
     if (!file) return;
     const reader = new FileReader();
-    reader.onloadend = () => setProfilePic(reader.result as string);
+    reader.onloadend = () => setNewProfilePic(reader.result as string);
     reader.readAsDataURL(file);
   };
 
@@ -40,6 +62,34 @@ const ProfilePage = () => {
       alert('Cuenta eliminada');
     }
   };
+
+  const handleSubmit = async () => {
+    if (!token) return;
+    if(newProfilePic != ''){
+      try {
+        const response = await api.updatePhoto(newProfilePic, token);
+        if(response){
+          setNewProfilePic('');
+        }
+      } catch (error) {
+        
+      }
+    }
+
+    if(newBio !=''){
+      try {
+        const response = await api.updateDescription(newBio, token);
+        if(response){
+          setBio(newBio);
+          setNewBio('');
+        }
+      } catch (error) {
+        
+      }
+    }
+
+
+  }
 
   return (
     <div className="min-h-screen bg-[#fff8f5] flex flex-col">
@@ -149,13 +199,16 @@ const ProfilePage = () => {
 
             <textarea
               value={bio}
-              onChange={(e) => setBio(e.target.value)}
+              onChange={(e) => setNewBio(e.target.value)}
               placeholder="Escribe una breve descripción..."
               className="w-full h-24 border border-orange-200 rounded-xl p-3 text-sm text-gray-700 focus:ring-2 focus:ring-orange-300 mb-4 resize-none"
             />
 
             <button
-              onClick={() => setEditOpen(false)}
+              onClick={() => {setEditOpen(false);
+                              handleSubmit();
+              }
+              }
               className="w-full py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow transition">
               Guardar cambios
             </button>

@@ -8,6 +8,7 @@ interface User {
   email: string;
   username: string;
   avatar?: string;
+  description?: string;
   token: string
 }
 
@@ -19,31 +20,42 @@ export const useAuth = () => {
 
   // Verificar si hay sesión guardada al cargar la página
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      // Hacer un fetch con la info del usuario
-      const fetchUser = async () => {
-        try {
-          const response = await api.obtainUserData(token);
-          if (response !=  null){
-            console.log('token existente ' + token + '  usuario:' + response.username);
-
-            setUser(response);
-            setLoading(false);
-          }
-          
-        } catch (err: any) {
-          setError(err.message);
-          setLoading(false);
-          navigate('/');
-        }
-      }
-      fetchUser();
+    const checkAuth = async () => {
+      const token = localStorage.getItem('auth_token');
       
-    } else {
-      setLoading(false);
-    }
-    
+      // Si NO hay token, no hacer nada
+      if (!token) {
+        console.log('ℹ️ No hay token guardado');
+        setLoading(false);
+        return;
+      }
+
+      // Si hay token, verificar que sea válido
+      try {
+        console.log('🔍 Token encontrado, verificando...');
+        const response = await api.obtainUserData(token);
+        
+        if (response) {
+          console.log('✅ Token válido. Usuario:', response.username);
+          setUser(response);
+
+        } else {
+          // Token inválido o expirado
+          console.warn('⚠️ Token inválido, limpiando localStorage');
+          localStorage.removeItem('auth_token');
+          setUser(null);
+        }
+      } catch (err: any) {
+        console.error('❌ Error al verificar autenticación:', err);
+        localStorage.removeItem('auth_token');
+        setError(err.message);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string) => {

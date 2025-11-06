@@ -57,26 +57,86 @@ export const api = {
   }
 },
 
-async obtainUserData(token: string) {
-  try {
-    const user = await fetch(`${API_BASE_URL}/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    })
-    const userData = await user.json();
-    if (userData){
-    return userData;
+ async obtainUserData(token: string) {
+    try {
+      console.log('👤 Obteniendo datos del usuario...');
+      
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      // Si el token es inválido o expiró
+      if (response.status === 401) {
+        console.warn('⚠️ Token inválido o expirado');
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Verificar que hay contenido antes de parsear
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        console.warn('⚠️ Respuesta vacía del servidor');
+        return null;
+      }
+
+      const userData = JSON.parse(text);
+      console.log('✅ Datos del usuario obtenidos:', userData);
+      return userData;
+
+    } catch (error: any) {
+      console.error("❌ Error al obtener los datos del usuario:", error);
+      // IMPORTANTE: Retornar null en lugar de no retornar nada
+      return null;
     }
-  } catch (error) {
-    console.error("Error al obtener los datos del usuario:", error);
-  }
   
 },
 //taggedUsers y Hashtags hay que separarlos. Deberia enviar el token o id del usuario?
+  async updatePhoto(userPhoto : String, token: String){
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/update-bio`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(userPhoto),
+      });
+        if (response.ok){
+          return true;
+        }
+      } catch (error) {
+        console.error("Error al actualizar la descripcion del usuario:", error);
+        return false;
+      }
+      return false;
+      
+  },
 
-
+  async updateDescription(description:String, token:String): Promise <Boolean>{
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/update-bio`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(description),
+      });
+        if (response.ok){
+          return true;
+        }
+      } catch (error) {
+        console.error("Error al actualizar la descripcion del usuario:", error);
+        return false;
+      }
+      return false;
+  }
   
 };

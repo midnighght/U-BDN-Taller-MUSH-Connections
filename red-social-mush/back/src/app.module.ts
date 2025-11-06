@@ -14,8 +14,12 @@ import { UploadService } from './upload/upload.service';
 import { UploadModule } from './upload/upload.module';
 
 @Module({
-   imports: [
-    MongooseModule.forRoot('mongodb://localhost/redsocial'),
+  imports: [
+    // Usar variable de entorno con fallback para desarrollo local
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI || 
+      'mongodb://mush:password1234@localhost:38130/redsocial?authSource=admin'
+    ),
     UsersModule,
     AuthModule,
     PostsModule,

@@ -6,11 +6,10 @@ const Header = () => {
   const navigate = useNavigate();
 
   const redirectProfilePage = () => {
-  return () => {
     navigate("/profile");
     return true;
-  };
-}
+  
+};
  const redirectHomePage = () => {
   navigate("/home");
 };
@@ -49,7 +48,7 @@ const Header = () => {
 
         {/* ÍCONOS DE USUARIO */}
         <div className="flex items-center space-x-4">
-          <button onClick={redirectProfilePage()} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">👤</button>
+          <button onClick={redirectProfilePage} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">👤</button>
           <button className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">🔔</button>
           
             <button

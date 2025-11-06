@@ -7,21 +7,24 @@ export type UserDocument = User & Document;
 @Schema()
 export class User {
 
-
+  
   @Prop({required: true })
   username: string;
-
+  
   @Prop({required: true})
   email: string;
-
+  
   @Prop({required: true})
   password: string;
-
+  
   @Prop({type: [Types.ObjectId]})
   blockedUsers: Types.ObjectId[];
-
-  @Prop()
+  
+  @Prop({default:""})
   description?: string;
+
+  @Prop({default:""})
+  userPhoto?: string;
 
   @Prop({type:Boolean , required: true})
   isPrivate: boolean;

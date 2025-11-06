@@ -38,15 +38,17 @@ export class AuthController {
     @UseGuards(AuthGuard) 
     @Get('me')
     async getUserInfo(@Request() request) {
-        const user = await this.authService['userModel'].findById(request.user.userId)
+        const userId = request.user.userId;
+        const user = await this.authService['userModel'].findById(userId)
             .select('-password');
         if(user!=null){
+        console.log('Foto '+ user.userPhoto)
         return {
-          
             id: user._id,
             username: user.username,
             email: user.email,
             description: user.description,
+            userPhoto : user.userPhoto,
             isPrivate: user.isPrivate,
             lastLogin: user.lastLogin,
             createdAt: user.createdAt,
