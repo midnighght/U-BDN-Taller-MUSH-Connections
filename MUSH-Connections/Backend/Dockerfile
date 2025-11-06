@@ -1,17 +1,13 @@
 # backend/Dockerfile
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci --production=false
-COPY tsconfig.json .
-COPY src ./src
-RUN npm run build
+FROM node:20-alpine
 
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY package.json package-lock.json ./
-RUN npm ci --production=true
-COPY --from=builder /app/dist ./dist
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+
+CMD ["npm", "run", "start:dev"]

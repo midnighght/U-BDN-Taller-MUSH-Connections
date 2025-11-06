@@ -2,7 +2,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const api = {
  
-  
   async login(email: string, password: string) {
     console.log('🔐 Preparando login para:', email);
   

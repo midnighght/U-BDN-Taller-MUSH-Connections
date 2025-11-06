@@ -14,8 +14,7 @@ const users : User[] = [
         username:'Alice',
         password: 'topsecret',
 
-    }
-    ,
+    },
     {
         userId : 2,
         username: 'Bob',

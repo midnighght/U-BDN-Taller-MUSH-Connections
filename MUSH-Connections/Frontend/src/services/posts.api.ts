@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const posts_api = {
 async createPost(image:string, description: string, taggedUsers: string, hashtags: string, token: string

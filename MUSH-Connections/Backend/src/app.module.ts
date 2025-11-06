@@ -9,19 +9,19 @@ import { PostsModule } from './posts/posts.module';
 // import { CommentsController } from './comments/comments.controller';
 // import { CommentsService } from './comments/comments.service';
 // import { CommentsModule } from './comments/comments.module';
-// import { RegistrationModule } from './registration/registration.module';
+import { RegistrationModule } from './registration/registration.module';
 import { UploadService } from './upload/upload.service';
 import { UploadModule } from './upload/upload.module';
 
 @Module({
    imports: [
-  MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://mongo:27017/redsocial'),
+  MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://mush:password1234@localhost:38130/redsocial?authSource=admin'),
     UsersModule,
     AuthModule,
     PostsModule,
     // CommunitiesModule,
     // CommentsModule,
-    // RegistrationModule,
+    RegistrationModule,
     UploadModule,
   ],
   // controllers: [AppController, CommentsController],

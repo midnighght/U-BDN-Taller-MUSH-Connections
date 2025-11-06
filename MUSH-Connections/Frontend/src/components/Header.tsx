@@ -33,7 +33,7 @@ const Header = () => {
         
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-300 flex items-center justify-center">     
-             <img onClick ={redirectHomePage} src={logoGato} alt="Logo" className="object-cover w-full h-full" /> 
+             <img onClick ={redirectHomePage} src={logoGato} alt="Logo" className="object-cover w-full h-full p-2" /> 
           </div>
         </div>
 
