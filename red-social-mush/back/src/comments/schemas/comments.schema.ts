@@ -6,8 +6,6 @@ import type { Date } from 'mongoose';
 export type CommentDocument = Comment & Document;
 @Schema()
 export class Comment {
-  @Prop({ type: Types.ObjectId , required:true})
-  _id: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, required: true })
   postID: Types.ObjectId;

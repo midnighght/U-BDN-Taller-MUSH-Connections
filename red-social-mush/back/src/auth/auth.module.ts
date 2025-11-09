@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from 'src/users/users.module';
 import { JwtModule } from '@nestjs/jwt'; // 👈 JWT Module
 import { JWT_SECRET } from 'src/configs/jwt-secret';
+import { CommunitiesModule } from 'src/communities/communities.module';
 
 @Module({
     providers: [AuthService],
@@ -16,6 +17,7 @@ import { JWT_SECRET } from 'src/configs/jwt-secret';
             secret: JWT_SECRET, 
             signOptions: { expiresIn: '1d' }, 
         }),
+        CommunitiesModule
     ],
 })
 export class AuthModule {}

@@ -12,11 +12,14 @@ import {
 import { loginDTO, loginResponseDTO, registerDTO } from './dto/auth.dto';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guards';
+import { CommunitiesService } from 'src/communities/communities.service';
 
 @Controller('auth')
 export class AuthController {
 
-    constructor(private authService: AuthService) {}
+    constructor(private authService: AuthService,
+            private communitiesService: CommunitiesService
+    ) {}
 
     
     @HttpCode(HttpStatus.OK)
@@ -41,6 +44,8 @@ export class AuthController {
         const userId = request.user.userId;
         const user = await this.authService['userModel'].findById(userId)
             .select('-password');
+        const communities = await this.communitiesService.getUserCommunitiesCount(userId);
+        console.log('id en el controller auth ', userId);
         if(user!=null){
         console.log('Foto '+ user.userPhoto)
         return {
@@ -52,6 +57,7 @@ export class AuthController {
             isPrivate: user.isPrivate,
             lastLogin: user.lastLogin,
             createdAt: user.createdAt,
+            communities
         };
       }
     }

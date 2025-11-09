@@ -87,7 +87,7 @@ export const api = {
       }
 
       const userData = JSON.parse(text);
-      console.log('✅ Datos del usuario obtenidos:', userData);
+      console.log('✅ Datos del usuario obtenidos:', userData.communities);
       return userData;
 
     } catch (error: any) {

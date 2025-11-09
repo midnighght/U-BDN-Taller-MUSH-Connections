@@ -7,23 +7,24 @@ export type CommunityDocument = Community & Document;
 
 @Schema()
 export class Community {
-  @Prop({ type: Types.ObjectId, required:true })
-  _id: Types.ObjectId;
 
   @Prop({ required: true })
   name: string;
 
+  @Prop({ default: '' })
+  mediaURL: string;
+
   @Prop()
   description?: string;
 
-  @Prop({ type: Boolean, required: true })
+  @Prop({ type: Boolean })
   isPrivate: boolean;
 
   @Prop({ type: [Types.ObjectId], required: true })
   adminID: Types.ObjectId[];
 
   @Prop({ type: [Types.ObjectId], default: [] })
-  mmemberID: Types.ObjectId[];
+  memberID: Types.ObjectId[];
 
   @Prop({ type: [Types.ObjectId], default: [] })
   pendingRequestID: Types.ObjectId[];
@@ -31,7 +32,7 @@ export class Community {
   @Prop({ type: [String], default: [] })
   hashtags: string[];
 
-  @Prop({ type: Date, required: true })
+  @Prop({ type: Date, required: true, default: Date.now })
   createdAt: Date;
 }
 

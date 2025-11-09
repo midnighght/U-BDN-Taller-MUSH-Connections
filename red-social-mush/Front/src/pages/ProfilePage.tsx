@@ -9,6 +9,7 @@ const ProfilePage = () => {
   const [posts, setPosts] = useState([]);
   const [isEditOpen, setEditOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [communitiesCount, setCommunitiesCount] = useState(0);
   // Bio que quiere cambiar el usuario
   const [newBio, setNewBio] = useState('');
   // Imagen de perfil que quiere cambiar el usuario
@@ -28,6 +29,7 @@ const ProfilePage = () => {
         setBio(response.description);
         setProfilePic(response.userPhoto);
         setIsPrivate(response.isPrivate);
+        setCommunitiesCount(response.communities);
         console.log('privacidad al hacer fetch: ', response.isPrivate);
       } catch (error) {
         console.error('Error:', error);
@@ -162,7 +164,7 @@ const ProfilePage = () => {
                   </div>
                   <div className="bg-white rounded-lg p-3 text-center shadow">
                     <div className="text-sm text-gray-500">Comunidades</div>
-                    <div className="font-bold text-lg">3</div>
+                    <div className="font-bold text-lg">{communitiesCount}</div>
                   </div>
                 </div>
               </div>
