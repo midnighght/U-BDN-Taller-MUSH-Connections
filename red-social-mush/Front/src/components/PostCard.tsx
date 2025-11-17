@@ -1,62 +1,84 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import uploadIcon from '../assets/uploadIcon.png';
-import { api } from '../services/api.ts';
-import { posts_api } from '../services/posts.api.ts';
+import { posts_api } from '../services/posts.api';
 const PostCard = () => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [image, setImage] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [taggedUsers, setTaggedUsers] = useState('');
   const [hashtags, setHashtags] = useState('');
+  const [uploading, setUploading] = useState(false); // Estado de carga
+  const [error, setError] = useState<string>(''); // Estado de error
+
   const token = localStorage.getItem('auth_token');
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validar tipo
+      if (!file.type.startsWith('image/')) {
+        setError('Por favor selecciona una imagen válida');
+        return;
+      }
+
+      // Validar tamaño (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('La imagen no puede superar los 5MB');
+        return;
+      }
+
       setImage(file);
+      setError('');
+      
+      // Crear preview local
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        
-        setImageUrl(reader.result as string);
       };
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async () => {
-    if (!imageUrl) {
-      alert('¡Debes subir una imagen!');
+    if (!image) {
+      setError('¡Debes subir una imagen!');
       return;
     }
-    if(!token){
+    if (!token) {
+      setError('No hay token de autenticación');
       return;
     }
+
+    setUploading(true);
+    setError('');
+
     try {
-      const response = await posts_api.createPost(imageUrl,description,taggedUsers,hashtags, token);
-      if (response) {  
-        console.log('Publicacion subida');
+      // Crear FormData
+      const response = await posts_api.createPost( image, description, taggedUsers, hashtags, token);
+
+      if (response){
+        console.log('Publicación creada');
       }
-    } catch (error) {
-      console.error('Error al subir la publicación: ', error);
+      // Cerrar modal y limpiar
+      setIsOpen(false);
+      setImage(null);
+      setImagePreview(null);
+      setDescription('');
+      setTaggedUsers('');
+      setHashtags('');
+      setError('');
+
+      // Opcional: Recargar posts o mostrar notificación de éxito
+      
+    } catch (error: any) {
+      console.error('❌ Error al subir la publicación:', error);
+      setError(error.message || 'Error al crear el post');
+    } finally {
+      setUploading(false);
     }
-    console.log({
-      image,
-      description,
-      taggedUsers,
-      hashtags
-    });
-    
-    // Cerrar modal y limpiar formulario
-    setIsOpen(false);
-    setImage(null);
-    setImagePreview(null);
-    setDescription('');
-    setTaggedUsers('');
-    setHashtags('');
   };
 
   return (
@@ -79,6 +101,7 @@ const PostCard = () => {
               <button 
                 onClick={() => setIsOpen(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
+                disabled={uploading}
               >
                 ✕
               </button>
@@ -106,10 +129,13 @@ const PostCard = () => {
                     onChange={handleImageChange}
                     className="hidden"
                     id="image-upload"
+                    disabled={uploading}
                   />
                   <label
                     htmlFor="image-upload"
-                    className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-orange-300 rounded-3xl cursor-pointer bg-orange-50 hover:bg-orange-100 transition"
+                    className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-orange-300 rounded-3xl cursor-pointer bg-orange-50 hover:bg-orange-100 transition ${
+                      uploading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     {imagePreview ? (
                       <img 
@@ -121,7 +147,7 @@ const PostCard = () => {
                       <>
                         <span className="text-5xl mb-2">📷</span>
                         <span className="text-gray-600 font-medium">Haz clic para subir una imagen</span>
-                        <span className="text-gray-400 text-sm mt-1">PNG, JPG hasta 10MB</span>
+                        <span className="text-gray-400 text-sm mt-1">PNG, JPG, GIF, WEBP (máximo 5MB)</span>
                       </>
                     )}
                   </label>
@@ -133,12 +159,20 @@ const PostCard = () => {
                       setImage(null);
                       setImagePreview(null);
                     }}
-                    className="mt-2 text-sm text-red-500 hover:text-red-700"
+                    disabled={uploading}
+                    className="mt-2 text-sm text-red-500 hover:text-red-700 disabled:opacity-50"
                   >
                     Eliminar imagen
                   </button>
                 )}
               </div>
+
+              {/* Mensaje de error */}
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">❌ {error}</p>
+                </div>
+              )}
 
               {/* Descripción */}
               <div>
@@ -150,7 +184,8 @@ const PostCard = () => {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="¿Qué quieres compartir?"
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
+                  disabled={uploading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none disabled:opacity-50"
                 />
               </div>
 
@@ -164,7 +199,8 @@ const PostCard = () => {
                   value={hashtags}
                   onChange={(e) => setHashtags(e.target.value)}
                   placeholder="#viajes #aventura #naturaleza"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  disabled={uploading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:opacity-50"
                 />
                 <p className="text-xs text-gray-500 mt-1">Agrega # antes de cada palabra</p>
               </div>
@@ -179,7 +215,8 @@ const PostCard = () => {
                   value={taggedUsers}
                   onChange={(e) => setTaggedUsers(e.target.value)}
                   placeholder="@usuario1, @usuario2..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  disabled={uploading}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:opacity-50"
                 />
                 <p className="text-xs text-gray-500 mt-1">Separa los usuarios con comas</p>
               </div>
@@ -189,16 +226,40 @@ const PostCard = () => {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-full font-semibold hover:bg-gray-300 transition"
+                  disabled={uploading}
+                  className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-full font-semibold hover:bg-gray-300 transition disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="flex-1 bg-gradient-to-r from-orange-400 to-pink-500 text-white py-3 rounded-full font-semibold hover:opacity-90 transition shadow-lg"
+                  disabled={uploading || !image}
+                  className="flex-1 bg-gradient-to-r from-orange-400 to-pink-500 text-white py-3 rounded-full font-semibold hover:opacity-90 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Publicar 🚀
+                  {uploading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Publicando...
+                    </span>
+                  ) : (
+                    'Publicar 🚀'
+                  )}
                 </button>
               </div>
             </div>

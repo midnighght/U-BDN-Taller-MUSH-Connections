@@ -21,6 +21,10 @@ export class registerDTO {
     password: string;
     description?: string;
     isPrivate?: boolean;
+    firstName: string;
+    lastName: string;
+    birthDate: string;
+    location: string
 }
 
 export class signInDTO {

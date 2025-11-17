@@ -55,19 +55,37 @@ const CommunityManager: React.FC<CommunityManagerProps> = ({ onClose }) => {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCommunityData((prev) => ({
-          ...prev,
-          image: reader.result as string,
-          preview: reader.result as string,
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  // ✅ VALIDAR TIPO
+  if (!file.type.startsWith('image/')) {
+    alert('Solo se permiten imágenes');
+    return;
+  }
+
+  // ✅ VALIDAR TAMAÑO (5MB)
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    alert('La imagen no puede superar los 5MB. Por favor, elige una imagen más pequeña.');
+    return;
+  }
+
+  console.log('Tamaño de imagen:', (file.size / 1024 / 1024).toFixed(2), 'MB'); // Ver tamaño
+
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64 = reader.result as string;
+    console.log('Tamaño base64:', (base64.length / 1024 / 1024).toFixed(2), 'MB'); // Ver tamaño en base64
+    
+    setCommunityData((prev) => ({
+      ...prev,
+      image: base64,
+      preview: base64,
+    }));
   };
+  reader.readAsDataURL(file);
+};
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +115,8 @@ const CommunityManager: React.FC<CommunityManagerProps> = ({ onClose }) => {
     
     // TODO: Implementar la lógica para salir de la comunidad
     console.log('Salir de comunidad:', communityId);
+
+    
   };
 
   return (

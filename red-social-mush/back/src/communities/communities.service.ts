@@ -4,78 +4,82 @@ import { Community, CommunityDocument } from './schemas/communities.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateComunityDTO } from './dto/communities.dto';
-import { Integer } from 'neo4j-driver';
-import { use } from 'passport';
 
 @Injectable()
 export class CommunitiesService {
-
-    
-    constructor( private readonly uploadService: UploadService,
+    constructor(
+        private readonly uploadService: UploadService,
         @InjectModel(Community.name) private readonly communityModel: Model<CommunityDocument>
-    ){}
+    ) {}
+    
     async createCommunity(createComunityDTO: CreateComunityDTO, userId: string) {
-        const existingCommunity = await this.communityModel.findOne({ name: createComunityDTO.name });
+        // Verificar si ya existe
+        const existingCommunity = await this.communityModel.findOne({ 
+            name: createComunityDTO.name 
+        });
+        
         if (existingCommunity) {
             throw new UnauthorizedException('Community already exists');
         }
+        
+        // ✅ Subir imagen a Cloudinary (ahora devuelve URL)
         const imageBase64 = createComunityDTO.image.toString(); 
-        const imagePath = await this.uploadService.saveImageBase64(imageBase64);
-        createComunityDTO.image = imagePath;
+        const imageUrl = await this.uploadService.saveImageBase64(imageBase64);
+        
         try {
-            const comunity = new this.communityModel({
+            const community = new this.communityModel({
                 name: createComunityDTO.name,
-                mediaURL: createComunityDTO.image, // Assuming the image file is stored in the `path` property
-                adminID: [new Types.ObjectId(userId)], // Assuming the image file is stored in the `path` propertyuserId], 
+                mediaURL: imageUrl, // ✅ URL de Cloudinary
+                superAdminID: [new Types.ObjectId(userId)],
                 description: createComunityDTO.description,
                 hashtags: createComunityDTO.hashtags,
                 isPrivate: false
-            }
-            );
-            console.log(comunity);
-            await comunity.save();
+            });
+            
+            console.log('Comunidad creada:', community);
+            await community.save();
             return true;
-        }catch (error) {
-            console.error('Error saving post:', error);
+        } catch (error) {
+            console.error('Error saving community:', error);
             return false;
         }
-        
-    };
+    }
+    
     async getUserCommunitiesCount(userId: string) {
-    const userObjectId = new Types.ObjectId(userId);
+        const userObjectId = new Types.ObjectId(userId);
+        
+        const communitiesCount = await this.communityModel.countDocuments({
+            $or: [
+                { superAdminID: { $in: [userObjectId] } },
+                { memberID: { $in: [userObjectId] } },
+                { adminID: { $in: [userObjectId] } }
+            ]
+        });
+        
+        return communitiesCount;
+    }
     
-    const communitiesCount = await this.communityModel.countDocuments({
-        $or: [
-            { memberID: { $in: [userObjectId] } },
-            { adminID: { $in: [userObjectId] } }
-        ]
-    });
-    
-    console.log('Communities count:', communitiesCount);
-    return communitiesCount;
-}
-// En communities.service.ts
-async getUserCommunities(userId: string) {
-    const userObjectId = new Types.ObjectId(userId);
-    const communities = await this.communityModel.find({
-        $or: [
-            { memberID: { $in: [userObjectId] }},
-            { adminID: { $in: [userObjectId] } }
-        ]
-    }).select('name description mediaURL hashtags isPrivate adminID memberID createdAt');
-    
-    // Agregar información de si el usuario es admin
-    return communities.map(community => ({
-        _id: community._id,
-        name: community.name,
-        description: community.description,
-        mediaURL: community.mediaURL,
-        hashtags: community.hashtags,
-        isPrivate: community.isPrivate,
-        isAdmin: community.adminID.includes(userId as any),
-        membersCount: community.memberID.length,
-        adminsCount: community.adminID.length,
-        createdAt: community.createdAt
-    }));
-}
+    async getUserCommunities(userId: string) {
+        const userObjectId = new Types.ObjectId(userId);
+        const communities = await this.communityModel.find({
+            $or: [
+                { superAdminID: { $in: [userObjectId] } },
+                { memberID: { $in: [userObjectId] }},
+                { adminID: { $in: [userObjectId] } }
+            ]
+        }).select('name description mediaURL hashtags isPrivate adminID memberID createdAt');
+        
+        return communities.map(community => ({
+            _id: community._id,
+            name: community.name,
+            description: community.description,
+            mediaURL: community.mediaURL, // ✅ Ya es URL de Cloudinary
+            hashtags: community.hashtags,
+            isPrivate: community.isPrivate,
+            isAdmin: community.adminID.some(id => id.toString() === userId),
+            membersCount: community.memberID.length,
+            adminsCount: community.adminID.length,
+            createdAt: community.createdAt
+        }));
+    }
 }

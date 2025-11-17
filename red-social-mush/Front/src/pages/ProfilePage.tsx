@@ -4,23 +4,33 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api.ts';
 import { useNavigate } from 'react-router-dom';
+
+// ✅ AGREGAR INTERFAZ PARA LOS POSTS
+interface Post {
+  _id: string;
+  mediaURL: string;
+  textBody: string;
+  authorID: string;
+  usertags: string[];
+  hashtags: string[];
+  createdAt?: string;
+}
+
 const ProfilePage = () => {
   const { user, logout } = useAuth();
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<Post[]>([]); // ✅ TIPADO
   const [isEditOpen, setEditOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [communitiesCount, setCommunitiesCount] = useState(0);
-  // Bio que quiere cambiar el usuario
   const [newBio, setNewBio] = useState('');
-  // Imagen de perfil que quiere cambiar el usuario
   const [newProfilePic, setNewProfilePic] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
-  const token = localStorage.getItem('auth_token');
-  // Bio que tiene guardado del usuario
   const [bio, setBio] = useState('');
-  // Imagen de perfil guardado del usuario
   const [profilePic, setProfilePic] = useState('');
+  
+  const token = localStorage.getItem('auth_token');
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -30,47 +40,40 @@ const ProfilePage = () => {
         setProfilePic(response.userPhoto);
         setIsPrivate(response.isPrivate);
         setCommunitiesCount(response.communities);
-        console.log('privacidad al hacer fetch: ', response.isPrivate);
       } catch (error) {
         console.error('Error:', error);
       }
     };
     fetchUserData();
-  }, [user?.id, newProfilePic]);
+  }, [token, newProfilePic]); // ✅ Mejor usar token como dependencia
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         if (!token) return console.error('Token is null');
         const response = await posts_api.obtainUserPosts(token);
-        console.log('posts: ',response);
-        setPosts(response);
+        console.log('posts: ', response);
+        setPosts(response); // ✅ Ya no necesitas JSON.parse porque el service devuelve array
       } catch (error) {
         console.error('Error:', error);
       }
     };
     fetchPosts();
-  }, [user?.id]);
+  }, [token]); // ✅ Mejor usar token como dependencia
 
-  
-    const handlePrivacyChange = async (privacy: boolean) => {
-      console.log(isPrivate);
-      setIsPrivate(privacy);
-      console.log('Al hacer el cambio ', isPrivate);
-      try {
-        if (!token) return console.error('Token is null');
-        await api.updateAccountPrivacy(token, privacy);
-  
-
-      } catch (error) {
-        console.error('Error:', error);
-        setIsPrivate(!privacy);
-      }
-    };
+  const handlePrivacyChange = async (privacy: boolean) => {
+    setIsPrivate(privacy);
+    try {
+      if (!token) return console.error('Token is null');
+      await api.updateAccountPrivacy(token, privacy);
+    } catch (error) {
+      console.error('Error:', error);
+      setIsPrivate(!privacy);
+    }
+  };
    
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    console.log(file);
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => setNewProfilePic(reader.result as string);
@@ -88,31 +91,31 @@ const ProfilePage = () => {
 
   const handleSubmit = async () => {
     if (!token) return;
-    if(newProfilePic != ''){
+    
+    if (newProfilePic !== '') {
       try {
         const response = await api.updatePhoto(newProfilePic, token);
-        if(response){
+        if (response) {
+          setProfilePic(newProfilePic); // ✅ Actualizar también profilePic
           setNewProfilePic('');
         }
       } catch (error) {
-        
+        console.error('Error updating photo:', error);
       }
     }
 
-    if(newBio !=''){
+    if (newBio !== '') {
       try {
         const response = await api.updateDescription(newBio, token);
-        if(response){
+        if (response) {
           setBio(newBio);
           setNewBio('');
         }
       } catch (error) {
-        
+        console.error('Error updating bio:', error);
       }
     }
-
-
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#fff8f5] flex flex-col">
@@ -173,27 +176,65 @@ const ProfilePage = () => {
 
           {/* Feed principal */}
           <section className="flex-1">
-            <div className="grid grid-cols-2 gap-6">
-              {posts.map(({ mediaURL, textBody }, i) => (
-                <article key={i} className="bg-white rounded-2xl shadow-md p-4">
-                  <header className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">👤</div>
-                    <h3 className="text-lg text-gray-600 font-semibold">{user?.username}</h3>
-                  </header>
+            {/* ✅ AGREGAR MENSAJE SI NO HAY POSTS */}
+            {posts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <span className="text-6xl mb-4">📸</span>
+                <p className="text-gray-600 text-lg">No hay publicaciones todavía</p>
+                <p className="text-gray-500 text-sm">¡Crea tu primera publicación!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-6">
+                {posts.map((post, i) => ( // ✅ Usar 'post' completo en lugar de destructurar
+                  <article key={post._id || i} className="bg-white rounded-2xl shadow-md p-4">
+                    <header className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                        {profilePic ? (
+                          <img src={profilePic} alt="perfil" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xl">👤</span>
+                        )}
+                      </div>
+                      <h3 className="text-lg text-gray-600 font-semibold">{user?.username}</h3>
+                    </header>
 
-                  <div className="bg-orange-100 rounded-lg h-40 mb-3 overflow-hidden">
-                    <img src={mediaURL} alt="Post" className="w-full h-full object-cover" />
-                  </div>
+                    {/* ✅ IMAGEN DEL POST CON FALLBACK */}
+                    <div className="bg-orange-100 rounded-lg h-40 mb-3 overflow-hidden">
+                      <img 
+                        src={post.mediaURL} 
+                        alt="Post" 
+                        className="w-full h-full object-cover"
+                        loading="lazy" // ✅ Carga diferida
+                        onError={(e) => {
+                          // ✅ Si falla, mostrar placeholder
+                          e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Imagen+no+disponible';
+                        }}
+                      />
+                    </div>
 
-                  <p className="text-sm text-gray-500 line-clamp-3">{textBody || 'Sin descripción'}</p>
-                </article>
-              ))}
-            </div>
+                    <p className="text-sm text-gray-500 line-clamp-3">
+                      {post.textBody || 'Sin descripción'}
+                    </p>
+
+                    {/* ✅ OPCIONAL: Mostrar hashtags si los hay */}
+                    {post.hashtags && post.hashtags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {post.hashtags.map((tag, index) => (
+                          <span key={index} className="text-xs text-blue-500">
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       </div>
 
-      {/* --- MODAL EDITAR PERFIL (versión anterior) --- */}
+      {/* --- MODAL EDITAR PERFIL --- */}
       {isEditOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 backdrop-blur-sm">
           <div className="bg-gradient-to-b from-orange-50 to-yellow-50 p-8 rounded-3xl shadow-2xl w-[420px] text-center relative">
@@ -207,7 +248,10 @@ const ProfilePage = () => {
 
             <div className="flex flex-col items-center mb-4">
               <div className="w-32 h-32 rounded-full bg-orange-100 shadow-inner mb-4 overflow-hidden flex items-center justify-center">
-                {profilePic ? (
+                {/* ✅ MOSTRAR newProfilePic si existe, sino profilePic */}
+                {newProfilePic ? (
+                  <img src={newProfilePic} alt="preview" className="w-full h-full object-cover" />
+                ) : profilePic ? (
                   <img src={profilePic} alt="preview" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-4xl text-orange-600">📷</span>
@@ -223,15 +267,15 @@ const ProfilePage = () => {
             <textarea
               value={newBio}
               onChange={(e) => setNewBio(e.target.value)}
-              placeholder="Escribe una breve descripción..."
+              placeholder={bio || "Escribe una breve descripción..."} // ✅ Mostrar bio actual como placeholder
               className="w-full h-24 border border-orange-200 rounded-xl p-3 text-sm text-gray-700 focus:ring-2 focus:ring-orange-300 mb-4 resize-none"
             />
 
             <button
-              onClick={() => {setEditOpen(false);
-                              handleSubmit();
-              }
-              }
+              onClick={() => {
+                setEditOpen(false);
+                handleSubmit();
+              }}
               className="w-full py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow transition">
               Guardar cambios
             </button>
@@ -239,7 +283,7 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* --- MODAL AJUSTES (igual que antes) --- */}
+      {/* --- MODAL AJUSTES --- */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
           <div className="bg-white rounded-2xl shadow-lg p-6 w-[400px] relative">

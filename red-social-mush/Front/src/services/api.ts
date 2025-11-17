@@ -24,17 +24,17 @@ export const api = {
       }
       
       const data = await response.json();
-      console.log('🎉 Login exitoso. Datos recibidos:', data);
+      console.log('Login exitoso. Datos recibidos:', data);
       return data;
       
     } catch (error: any) {
-      console.log('💥 Error en login:', error.message);
+      console.log('Error en login:', error.message);
       throw new Error('Error en login: ' + error.message);
     }
   },
 
-  async register(email: string, password: string, username: string) {
-  const credentials: registerDTO = { email: email, password: password, username:username };
+  async register(email: string, password: string, username: string, firstName: string, lastName: string, birthDate: string, location: string) {
+  const credentials: registerDTO = { email: email, password: password, username:username, firstName:firstName, lastName:lastName, birthDate:birthDate, location:location };
   try {
     const result = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
@@ -100,7 +100,7 @@ export const api = {
 //taggedUsers y Hashtags hay que separarlos. Deberia enviar el token o id del usuario?
   async updatePhoto(userPhoto : String, token: String){
     try {
-        const response = await fetch(`${API_BASE_URL}/users/update-bio`, {
+        const response = await fetch(`${API_BASE_URL}/users/update-photo`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

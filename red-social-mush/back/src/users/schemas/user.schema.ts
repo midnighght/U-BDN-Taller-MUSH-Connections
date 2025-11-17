@@ -34,5 +34,17 @@ export class User {
 
   @Prop()
   lastLogin?: Date;
+
+  @Prop({type: String})
+  Location?: string;
+  
+  @Prop({ default: false })
+  isVerified: boolean; // ✅ NUEVO: Para verificación de email
+
+  @Prop({required: false})
+  verificationToken?: string; // ✅ NUEVO: Token de verificación
+
+  @Prop({ required: false })
+  verificationTokenExpires?: Date; // ✅ NUEVO: Expiración del token
 }
 export const UserSchema = SchemaFactory.createForClass(User);

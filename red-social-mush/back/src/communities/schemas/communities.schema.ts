@@ -21,6 +21,9 @@ export class Community {
   isPrivate: boolean;
 
   @Prop({ type: [Types.ObjectId], required: true })
+  superAdminID: Types.ObjectId;
+
+  @Prop({ type: [Types.ObjectId], required: true })
   adminID: Types.ObjectId[];
 
   @Prop({ type: [Types.ObjectId], default: [] })

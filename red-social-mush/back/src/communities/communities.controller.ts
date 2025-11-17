@@ -24,7 +24,6 @@ export class CommunitiesController {
     @UseGuards(AuthGuard)
     async getMyCommunitiesDetailed(@Request() request) {
         const userId = request.user.userId;
-        
         const communities = await this.communitiesService.getUserCommunities(userId);
         return communities;
     }

@@ -1,5 +1,5 @@
 export class CreatePostDTO{
-    image: String;
+    image: string;
     description: String;
     taggedUsers: String[];
     hashtags: String[];

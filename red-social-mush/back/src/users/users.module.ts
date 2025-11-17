@@ -5,12 +5,13 @@ import { User, UserSchema } from './schemas/user.schema';
 import { UsersController } from './users.controller';
 import { UploadModule } from 'src/upload/upload.module';
 import { UploadService } from 'src/upload/upload.service';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema }
-    ]), UploadModule
+    ]), UploadModule, CloudinaryModule
   ],
   providers: [UsersService,UploadService],
   exports: [UsersService, MongooseModule],

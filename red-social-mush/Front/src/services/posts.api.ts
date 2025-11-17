@@ -1,63 +1,72 @@
-import type { CreatePostDTO } from "./dto/posts.api.dto.ts";  
 const API_BASE_URL = 'http://localhost:3000';
 
 export const posts_api = {
-async createPost(image:String, description: String, taggedUsers: String, hashtags: String, token: string
-  ): Promise<Boolean> {
-  //Metodo para separar los taggedUsers y hashtags
-  const noSpacesTaggedUsers = taggedUsers.replace(/\s/g, "");
-  const splitTaggedUser = noSpacesTaggedUsers.split(',');
+  async createPost(
+    image: File, 
+    description: string, 
+    taggedUsers: string, 
+    hashtags: string, 
+    token: string
+  ): Promise<boolean> {
+    try {
+      // Procesar taggedUsers
+      const noSpacesTaggedUsers = taggedUsers.replace(/\s/g, "");
+      const splitTaggedUser = noSpacesTaggedUsers.split(',').filter(tag => tag !== '');
 
-  const noSpacesHashtags = hashtags.replace(/\s/g, "");
-  const splitHashtag = noSpacesHashtags.split("#");
-  splitHashtag.splice(0,1);
+      // Procesar hashtags
+      const noSpacesHashtags = hashtags.replace(/\s/g, "");
+      const splitHashtag = noSpacesHashtags.split("#").filter(tag => tag !== '');
 
+      // ✅ CREAR FORMDATA (NO DTO)
+      const formData = new FormData();
+      formData.append('image', image); // Archivo
+      formData.append('description', description);
+      formData.append('taggedUsers', splitTaggedUser.join(',')); // Array → string
+      formData.append('hashtags', splitHashtag.join(',')); // Array → string
 
-  const postData: CreatePostDTO = {
-        image: image, 
-        description: description, 
-        taggedUsers: splitTaggedUser,
-        hashtags: splitHashtag,
-  }
-  try {
-    const response =  await fetch(`${API_BASE_URL}/posts/createPost`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(postData
-      ),
-    });
-    if (response.ok){
-      return response.ok;
-    } 
-  }catch (error) {
-    console.log("Error al crear el post:", error);
-  }
-  return false;
+      const response = await fetch(`${API_BASE_URL}/posts/createPost`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // ✅ NO INCLUIR 'Content-Type' - FormData lo maneja
+        },
+        body: formData, // ✅ FORMDATA (no DTO)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Post creado:', data);
+        return true;
+      }
+      
+      const errorData = await response.json();
+      console.error('❌ Error:', errorData);
+      return false;
+    } catch (error) {
+      console.error("❌ Error al crear el post:", error);
+      return false;
+    }
   },
 
-   async  obtainUserPosts(token:string) {
-    
-  try {
-    const response = await fetch(`${API_BASE_URL}/posts/userPosts`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+  async obtainUserPosts(token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/posts/userPosts`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return typeof data === 'string' ? JSON.parse(data) : data;
       }
-    });
 
-    if (response.ok) {
-      const data = await response.json();
-      return data;
+      throw new Error('Failed to fetch user posts');
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
     }
-
-    throw new Error('Failed to fetch user posts');
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
   }
-}
 };

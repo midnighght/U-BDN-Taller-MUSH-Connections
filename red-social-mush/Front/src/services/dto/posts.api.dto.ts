@@ -1,5 +1,5 @@
 export type CreatePostDTO = {
-    image: String;
+    image: File;
     description: String;
     taggedUsers: String[];
     hashtags: String[];

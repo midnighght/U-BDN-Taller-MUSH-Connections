@@ -83,21 +83,29 @@ export const useAuth = () => {
     }
   };
 
-  const register = async (email: string, password: string, username: string) => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const result = await api.register(email, password, username);
-      return { success: true, data: result };
-      
-    } catch (err: any) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Actualizar la función register para aceptar los nuevos campos
+const register = async (
+  email: string,
+  password: string,
+  username: string,
+  firstName: string,
+  lastName: string,
+  birthDate: string,
+  location: string
+) => {
+  setLoading(true);
+  setError('');
+  try {
+    await api.register(email, password, username, firstName, lastName, birthDate, location);
+    return { success: true };
+  } catch (err: any) {
+    const errorMessage = err.message || 'Error al registrarse';
+    setError(errorMessage);
+    return { success: false, error: errorMessage };
+  } finally {
+    setLoading(false);
+  }
+};
   const logout = () => {
     
     localStorage.removeItem('auth_token');

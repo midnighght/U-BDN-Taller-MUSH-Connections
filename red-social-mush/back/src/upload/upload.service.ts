@@ -1,52 +1,64 @@
-// Backend - upload.service.ts
-import { Injectable } from '@nestjs/common';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import { mkdir } from 'fs/promises';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { v2 as cloudinary } from 'cloudinary';
 
 @Injectable()
 export class UploadService {
-  private readonly uploadPath = join(process.cwd(), 'uploads', 'images');
+  constructor(private readonly cloudinaryService: CloudinaryService) {}
 
- async saveImageBase64(base64String: string): Promise<string> {
-  // Crear carpeta si no existe (solo esta línea extra)
-  await mkdir(this.uploadPath, { recursive: true });
-  
-  const matches = base64String.match(/^data:image\/(\w+);base64,(.+)$/);
-  
-  if (!matches) {
-    throw new Error('Formato Base64 inválido');
+  /**
+   * Sube imagen a Cloudinary desde File (para posts con FileInterceptor)
+   */
+  async uploadImageToCloudinary(file: Express.Multer.File): Promise<string> {
+    try {
+      const result = await this.cloudinaryService.uploadImage(file);
+      return result.secure_url;
+    } catch (error) {
+      console.error('Error al subir imagen a Cloudinary:', error);
+      throw new BadRequestException('Error al subir la imagen');
+    }
   }
-  
-  const imageType = matches[1];
-  const imageData = matches[2];
-  const fileName = `${uuidv4()}.${imageType}`;
-  const fullPath = join(this.uploadPath, fileName);
-  
-  const buffer = Buffer.from(imageData, 'base64');
-  await writeFile(fullPath, buffer);
-  
-  return `/uploads/images/${fileName}`;
-}
-async saveUserPhoto64(base64String: string): Promise<string> {
-  // Crear carpeta si no existe (solo esta línea extra)
-  await mkdir(this.uploadPath, { recursive: true });
-  
-  const matches = base64String.match(/^data:image\/(\w+);base64,(.+)$/);
-  
-  if (!matches) {
-    throw new Error('Formato Base64 inválido');
+
+  /**
+   * Sube imagen base64 a Cloudinary (para communities, users)
+   */
+  async saveImageBase64(base64String: string): Promise<string> {
+    try {
+      return await this.uploadBase64ToCloudinary(base64String);
+    } catch (error) {
+      console.error('Error al subir base64:', error);
+      throw new BadRequestException('Error al subir la imagen');
+    }
   }
-  
-  const imageType = matches[1];
-  const imageData = matches[2];
-  const fileName = `${uuidv4()}.${imageType}`;
-  const fullPath = join(this.uploadPath, fileName);
-  
-  const buffer = Buffer.from(imageData, 'base64');
-  await writeFile(fullPath, buffer);
-  
-  return `/uploads/userPhotos/${fileName}`;
-}
+
+  /**
+   * Método privado para subir base64 a Cloudinary
+   */
+  private async uploadBase64ToCloudinary(base64String: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.upload(
+        base64String,
+        {
+          folder: 'user-photos', // Carpeta en Cloudinary
+          resource_type: 'auto',
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result!.secure_url); // Retorna URL de Cloudinary
+        }
+      );
+    });
+  }
+
+  /**
+   * Elimina imagen de Cloudinary
+   */
+  async deleteImageFromCloudinary(publicId: string): Promise<void> {
+    try {
+      await this.cloudinaryService.deleteImage(publicId);
+    } catch (error) {
+      console.error('Error al eliminar imagen:', error);
+      throw new BadRequestException('Error al eliminar la imagen');
+    }
+  }
 }
