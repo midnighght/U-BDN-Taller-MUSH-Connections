@@ -1,4 +1,4 @@
-import { Controller, Patch, Delete ,UseGuards, Body, Request, Get } from '@nestjs/common';
+import { Controller, Patch, Delete ,UseGuards, Body, Request, Get, Param } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guards';
 import { UsersService } from './users.service';
 @Controller('users')
@@ -39,5 +39,13 @@ export class UsersController {
          await this.usersService.userUpdatePrivacy(body.isPrivate, userId);
         
 
+    }
+
+     // ✅ NUEVO: Ver perfil de otro usuario
+    @Get(':userId')
+    @UseGuards(AuthGuard)
+    async getUserProfile(@Param('userId') userId: string, @Request() req) {
+        const viewerId = req.user.userId;
+        return await this.usersService.getUserProfile(userId, viewerId);
     }
 }

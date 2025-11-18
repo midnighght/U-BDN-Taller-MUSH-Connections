@@ -1,18 +1,33 @@
+import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import logoGato from '../assets/logo-gato.png';
 import { useNavigate } from 'react-router-dom';
+import logoGato from '../assets/logo-gato.png';
+
 const Header = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const redirectProfilePage = () => {
     navigate("/profile");
-    return true;
-  
-};
- const redirectHomePage = () => {
-  navigate("/home");
-};
+  };
+
+  const redirectHomePage = () => {
+    navigate("/home");
+  };
+
+  const redirectNotifications = () => {
+    navigate("/notifications");
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(''); // Limpiar búsqueda
+    }
+  };
+
   if (loading) {
     return (
       <header className="bg-gradient-to-r from-orange-400 to-orange-600">
@@ -21,41 +36,68 @@ const Header = () => {
         </div>
       </header>
     );
-
   }
 
   return (
     <header className="bg-gradient-to-r from-orange-400 to-orange-600 text-white shadow">
       <div className="max-w-7xl mx-auto flex justify-between items-center h-16 px-6">
         
+        {/* LOGO */}
         <div className="flex items-center space-x-2">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-300 flex items-center justify-center">     
-             <img onClick ={redirectHomePage} src={logoGato} alt="Logo" className="object-cover w-full h-full" /> 
+          <div 
+            onClick={redirectHomePage}
+            className="w-10 h-10 rounded-full overflow-hidden bg-orange-300 flex items-center justify-center cursor-pointer hover:scale-110 transition"
+          >     
+            <img src={logoGato} alt="Logo" className="object-cover w-full h-full" /> 
           </div>
         </div>
 
         {/* BUSCADOR */}
         <div className="flex-1 mx-8">
-          <div className="relative">
+          <form onSubmit={handleSearch} className="relative">
             <input
               type="text"
-              placeholder="Buscar..."
-              className="w-full bg-[#FFE0B2] text-gray-700 rounded-full py-2 pl-4 pr-10 placeholder-gray-500 focus:outline-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar usuarios, comunidades o hashtags..."
+              className="w-full bg-[#FFE0B2] text-gray-700 rounded-full py-2 pl-4 pr-10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-600 text-xl">🔍</span>
-          </div>
+            <button 
+              type="submit"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-600 text-xl hover:text-orange-700"
+            >
+              🔍
+            </button>
+          </form>
         </div>
 
         {/* ÍCONOS DE USUARIO */}
         <div className="flex items-center space-x-4">
-          <button onClick={redirectProfilePage} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">👤</button>
-          <button className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">🔔</button>
+          <button 
+            onClick={redirectProfilePage} 
+            className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
+            title="Mi perfil"
+          >
+            👤
+          </button>
           
-            <button
-              onClick={logout}
-              className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
-            >🚪
-            </button>
+          <button 
+            onClick={redirectNotifications}
+            className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition relative"
+            title="Notificaciones"
+          >
+            🔔
+            {/* Badge de notificaciones no leídas (implementar después) */}
+            {/* <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span> */}
+          </button>
+          
+          <button
+            onClick={logout}
+            className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
+            title="Cerrar sesión"
+          >
+            🚪
+          </button>
         </div>
       </div>
     </header>

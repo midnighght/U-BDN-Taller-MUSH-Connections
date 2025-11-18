@@ -1,0 +1,1 @@
+// Componente para que aparezca el modal de los posts y se pueda interactuar con estos.

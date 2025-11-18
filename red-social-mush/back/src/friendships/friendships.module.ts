@@ -4,7 +4,7 @@ import { FriendshipsController } from './friendships.controller';
 import { FriendshipsService } from './friendships.service';
 import { Friendship, FriendshipSchema } from './schemas/friendship.schema';
 import { NotificationsModule } from 'src/notifications/notifications.module';
-
+import { Model } from 'mongoose';
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -13,7 +13,9 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
     NotificationsModule, // Para crear notificaciones
   ],
   controllers: [FriendshipsController],
-  providers: [FriendshipsService],
+  providers: [FriendshipsService,
+    
+  ],
   exports: [FriendshipsService],
 })
 export class FriendshipsModule {}
