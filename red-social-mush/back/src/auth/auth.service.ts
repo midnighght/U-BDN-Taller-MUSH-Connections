@@ -137,33 +137,41 @@ export class AuthService {
 
   // ✅ NUEVO: Verificar email
   async verifyEmail(token: string): Promise<{ message: string }> {
-    const user = await this.userModel.findOne({
-      verificationToken: token,
-      verificationTokenExpires: { $gt: new Date() }, // Token no expirado
-    });
+  console.log('🔍 Buscando usuario con token:', token); // ✅ LOG
 
-    if (!user) {
-      throw new BadRequestException('Token de verificación inválido o expirado');
-    }
+  const user = await this.userModel.findOne({
+    verificationToken: token,
+    verificationTokenExpires: { $gt: new Date() },
+  });
 
-    // Marcar como verificado
-    await this.userModel.findByIdAndUpdate(user._id, {
-        $set: { isVerified: true },
-        $unset: { 
-            verificationToken: 1, 
-            verificationTokenExpires: 1 
-        }
-    });
-
-    // Enviar email de bienvenida
-    try {
-      await this.emailService.sendWelcomeEmail(user.email, user.username);
-    } catch (error) {
-      console.error('Error al enviar email de bienvenida:', error);
-    }
-
-    return { message: 'Email verificado exitosamente. Ya puedes iniciar sesión.' };
+  if (!user) {
+    console.log('❌ Token inválido o expirado'); // ✅ LOG
+    throw new BadRequestException('Token de verificación inválido o expirado');
   }
+
+  console.log('👤 Usuario encontrado:', user.email); // ✅ LOG
+
+  // Marcar como verificado y eliminar tokens
+  await this.userModel.findByIdAndUpdate(user._id, {
+    $set: { isVerified: true },
+    $unset: { 
+      verificationToken: 1, 
+      verificationTokenExpires: 1 
+    }
+  });
+
+  console.log('✅ Usuario marcado como verificado'); // ✅ LOG
+
+  // Enviar email de bienvenida
+  try {
+    await this.emailService.sendWelcomeEmail(user.email, user.username);
+    console.log('📧 Email de bienvenida enviado'); // ✅ LOG
+  } catch (error) {
+    console.error('⚠️ Error al enviar email de bienvenida:', error);
+  }
+
+  return { message: 'Email verificado exitosamente. Ya puedes iniciar sesión.' };
+}
 
   async validateToken(token: string) {
     try {

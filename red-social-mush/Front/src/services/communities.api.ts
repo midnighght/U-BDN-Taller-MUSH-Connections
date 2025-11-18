@@ -48,5 +48,30 @@ export const communities_api = {
             console.error('Error fetching communities:', error);
             throw error;
         }
+    },
+
+    async leaveCommunity(communityId: string, token: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/communities/leaveCommunity`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ communityId }), // ✅ Enviar como objeto
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Error al salir de la comunidad');
     }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('❌ Error al salir de comunidad:', error);
+    throw error;
+  }
+}
+
+
 }

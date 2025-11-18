@@ -17,33 +17,33 @@ export const posts_api = {
       const noSpacesHashtags = hashtags.replace(/\s/g, "");
       const splitHashtag = noSpacesHashtags.split("#").filter(tag => tag !== '');
 
-      // ✅ CREAR FORMDATA (NO DTO)
+      
       const formData = new FormData();
       formData.append('image', image); // Archivo
       formData.append('description', description);
-      formData.append('taggedUsers', splitTaggedUser.join(',')); // Array → string
-      formData.append('hashtags', splitHashtag.join(',')); // Array → string
+      formData.append('taggedUsers', splitTaggedUser.join(',')); 
+      formData.append('hashtags', splitHashtag.join(',')); 
 
       const response = await fetch(`${API_BASE_URL}/posts/createPost`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
-          // ✅ NO INCLUIR 'Content-Type' - FormData lo maneja
+          
         },
-        body: formData, // ✅ FORMDATA (no DTO)
+        body: formData, 
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Post creado:', data);
+        console.log('Post creado:', data);
         return true;
       }
       
       const errorData = await response.json();
-      console.error('❌ Error:', errorData);
+      console.error('Error:', errorData);
       return false;
     } catch (error) {
-      console.error("❌ Error al crear el post:", error);
+      console.error("Error al crear el post:", error);
       return false;
     }
   },

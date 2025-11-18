@@ -6,3 +6,4 @@ export type CreateComunityDTO = {
     token: string
 
 }
+

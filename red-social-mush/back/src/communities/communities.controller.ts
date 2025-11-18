@@ -1,4 +1,4 @@
-import { Body, Controller,Post,Get, UseGuards, Request } from '@nestjs/common';
+import { Body, Controller,Post,Get, UseGuards, Request, Delete } from '@nestjs/common';
 import { CommunitiesService } from './communities.service';
 import { AuthGuard } from 'src/auth/guards/auth.guards';
 import { CreateComunityDTO } from './dto/communities.dto';
@@ -27,4 +27,18 @@ export class CommunitiesController {
         const communities = await this.communitiesService.getUserCommunities(userId);
         return communities;
     }
+
+     @Delete('leaveCommunity')
+  @UseGuards(AuthGuard)
+  async leaveCommunity(@Body() body: { communityId: string }, @Request() req) {
+    // ✅ RECIBIR CORRECTAMENTE EL BODY
+    const { communityId } = body;
+    const userId = req.user.userId;
+    
+    console.log('👤 Usuario:', userId);
+    console.log('🏠 Comunidad:', communityId);
+    
+    const response = await this.communitiesService.leaveCommunity(communityId, userId);
+    return response;
+  }
 }

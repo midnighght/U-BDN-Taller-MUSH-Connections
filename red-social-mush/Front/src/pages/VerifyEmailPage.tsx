@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const VerifyEmailPage = () => {
@@ -6,8 +6,17 @@ const VerifyEmailPage = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  
+  
+  const hasVerified = useRef(false);
 
   useEffect(() => {
+    
+    if (hasVerified.current) {
+      console.log('⚠️ Ya se ejecutó la verificación, saltando...');
+      return;
+    }
+
     const verifyEmail = async () => {
       const token = searchParams.get('token');
 
@@ -17,7 +26,12 @@ const VerifyEmailPage = () => {
         return;
       }
 
+      
+      hasVerified.current = true;
+
       try {
+        console.log('🔑 Token:', token);
+
         const response = await fetch(
           `http://localhost:3000/auth/verify-email?token=${token}`,
           {
@@ -28,20 +42,30 @@ const VerifyEmailPage = () => {
           }
         );
 
-        const data = await response.json();
+        console.log('📡 Response status:', response.status);
+        console.log('📡 Response ok:', response.ok);
 
-        if (data.success) {
+        const data = await response.json();
+        console.log('Data recibida:', data);
+        console.log('data.success:', data.success); // ✅ NUEVO
+        console.log('data.message:', data.message); // ✅ NUEVO
+
+      
+        if (data.success === true) {
+          console.log('Verificación exitosa');
           setStatus('success');
-          setMessage(data.message);
-          // Redirigir al login después de 3 segundos
+          setMessage(data.message || 'Email verificado exitosamente');
+          
           setTimeout(() => {
             navigate('/');
           }, 3000);
         } else {
+          console.log('Verificación fallida:', data.message);
           setStatus('error');
           setMessage(data.message || 'Error al verificar el email');
         }
-      } catch (error) {
+      } catch (error: any) {
+        console.error('Error en fetch:', error);
         setStatus('error');
         setMessage('Error al conectar con el servidor');
       }
@@ -65,7 +89,7 @@ const VerifyEmailPage = () => {
 
         {status === 'success' && (
           <>
-            <div className="text-6xl mb-6">✅</div>
+            
             <h2 className="text-2xl font-bold text-green-600 mb-4">
               ¡Email Verificado!
             </h2>
@@ -84,7 +108,7 @@ const VerifyEmailPage = () => {
 
         {status === 'error' && (
           <>
-            <div className="text-6xl mb-6">❌</div>
+            
             <h2 className="text-2xl font-bold text-red-600 mb-4">
               Error de Verificación
             </h2>

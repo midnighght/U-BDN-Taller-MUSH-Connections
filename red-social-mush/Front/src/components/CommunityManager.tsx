@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { communities_api } from "../services/communities.api";
-
+import { useAuth } from "../hooks/useAuth";
 interface Community {
   _id: string;
   name: string;
@@ -18,9 +18,9 @@ interface CommunityManagerProps {
   onClose: () => void;
 }
 
-const token = localStorage.getItem('auth_token');
-
+ 
 const CommunityManager: React.FC<CommunityManagerProps> = ({ onClose }) => {
+   const { user } = useAuth();
   const [section, setSection] = useState<"mis" | "crear" | "explorar">("mis");
   const [myCommunities, setMyCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,15 +31,18 @@ const CommunityManager: React.FC<CommunityManagerProps> = ({ onClose }) => {
     image: "",
     preview: "",
   });
-
+  
+  const token = user?.token || localStorage.getItem('auth_token');
   // Cargar comunidades cuando se abre la sección "mis"
   useEffect(() => {
     if (section === "mis") {
       fetchMyCommunities();
     }
-  }, [section]);
+  }, [section,token]);
 
   const fetchMyCommunities = async () => {
+    console.log('🔄 fetchMyCommunities llamado'); // ✅ AGREGAR
+  console.log('📍 Token:', token ? 'existe' : 'NO existe'); // ✅ AGREGAR
     if (!token) return;
     
     setLoading(true);
@@ -58,13 +61,13 @@ const CommunityManager: React.FC<CommunityManagerProps> = ({ onClose }) => {
   const file = e.target.files?.[0];
   if (!file) return;
 
-  // ✅ VALIDAR TIPO
+
   if (!file.type.startsWith('image/')) {
     alert('Solo se permiten imágenes');
     return;
   }
 
-  // ✅ VALIDAR TAMAÑO (5MB)
+
   const maxSize = 5 * 1024 * 1024; // 5MB
   if (file.size > maxSize) {
     alert('La imagen no puede superar los 5MB. Por favor, elige una imagen más pequeña.');
@@ -111,13 +114,31 @@ const CommunityManager: React.FC<CommunityManagerProps> = ({ onClose }) => {
   };
 
   const handleLeaveCommunity = async (communityId: string) => {
-    if (!confirm('¿Estás seguro de que quieres salir de esta comunidad?')) return;
+  // ✅ CORREGIR: Verificar si el usuario CONFIRMA (no cancela)
+  if (!confirm('¿Estás seguro de que quieres salir de esta comunidad?')) {
+    return; // Si cancela, no hacer nada
+  }
+  
+  if (!token) return;
+  
+  try {
+    const response = await communities_api.leaveCommunity(communityId, token);
     
-    // TODO: Implementar la lógica para salir de la comunidad
-    console.log('Salir de comunidad:', communityId);
-
-    
-  };
+    if (response.success) {
+      alert('Has salido de la comunidad exitosamente');
+      // ✅ Recargar comunidades para actualizar la lista
+      fetchMyCommunities();
+    } else if (response.message === 'You are a superAdmin') {
+      alert('No puedes salir de esta comunidad porque eres el creador (Super Admin)');
+    } else {
+      alert('Error al salir de la comunidad');
+    }
+  } catch (error: any) {
+    console.error('❌ Error:', error);
+    alert(error.message || 'Error al salir de la comunidad');
+  }
+};
+  
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center z-50">

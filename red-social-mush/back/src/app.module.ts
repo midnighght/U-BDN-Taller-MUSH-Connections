@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PostsModule } from './posts/posts.module';
 import { CommunitiesModule } from './communities/communities.module';
-import { CommentsController } from './comments/comments.controller';
-import { CommentsService } from './comments/comments.service';
-import { CommentsModule } from './comments/comments.module';
+import { CommentsModule } from './comments/comments.module'; // ✅ IMPORTAR
 import { ConfigModule } from '@nestjs/config';
-import { UploadService } from './upload/upload.service';
 import { UploadModule } from './upload/upload.module';
-import { CloudinaryService } from './cloudinary/cloudinary.service';
-import { CloudinaryController } from './cloudinary/cloudinary.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmailModule } from './email/email.module';
+import { SearchModule } from './search/search.module';
+import { FriendshipsController } from './friendships/friendships.controller';
+import { FriendshipsService } from './friendships/friendships.service';
+import { FriendshipsModule } from './friendships/friendships.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -29,16 +29,19 @@ import { EmailModule } from './email/email.module';
       'mongodb://mush:password1234@localhost:38130/redsocial?authSource=admin'
       
     ),
-    UsersModule,
     AuthModule,
+    UsersModule,
     PostsModule,
     CommunitiesModule,
-    CommentsModule,
+    CommentsModule, // ✅ ADD THIS LINE
     UploadModule,
     CloudinaryModule,
     EmailModule,
+    SearchModule,
+    FriendshipsModule,
+    NotificationsModule,
   ],
-  controllers: [AppController, CommentsController, CloudinaryController],
-  providers: [AppService, CommentsService, UploadService, CloudinaryService],
+  controllers: [AppController, FriendshipsController],
+  providers: [AppService, FriendshipsService],
 })
 export class AppModule {}

@@ -33,30 +33,37 @@ export class AuthController {
     return await this.authService.register(registerDTO);
   }
 
-  // ✅ NUEVO: Endpoint para verificar email
-  @HttpCode(HttpStatus.OK)
-  @Get('verify-email')
-  async verifyEmail(@Query('token') token: string) {
-    if (!token) {
-      return { 
-        success: false, 
-        message: 'Token de verificación no proporcionado' 
-      };
-    }
+ @HttpCode(HttpStatus.OK)
+@Get('verify-email')
+async verifyEmail(@Query('token') token: string) {
+  
+
+  if (!token) {
+    const response = { 
+      success: false, 
+      message: 'Token de verificación no proporcionado' 
+    };
     
-    try {
-      const result = await this.authService.verifyEmail(token);
-      return { 
-        success: true, 
-        message: result.message 
-      };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.message || 'Error al verificar el email' 
-      };
-    }
+    return response;
   }
+  
+  try {
+    const result = await this.authService.verifyEmail(token);
+    const response = { 
+      success: true, 
+      message: result.message 
+    };
+    
+    return response;
+  } catch (error: any) {
+    const response = { 
+      success: false, 
+      message: error.message || 'Error al verificar el email' 
+    };
+   
+    return response;
+  }
+}
 
   @UseGuards(AuthGuard) 
   @Get('me')

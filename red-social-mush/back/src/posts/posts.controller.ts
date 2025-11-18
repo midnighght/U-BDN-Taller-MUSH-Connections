@@ -7,7 +7,9 @@ import {
   Get, 
   UseInterceptors, 
   UploadedFile,
-  BadRequestException 
+  BadRequestException,
+  Param,
+  Delete
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/auth/guards/auth.guards';
@@ -27,7 +29,7 @@ export class PostsController {
   @UseInterceptors(FileInterceptor('image'))
   async createPost(
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: any, // ✅ CAMBIO: any en lugar de CreatePostDTO
+    @Body() body: any, 
     @Request() req,
   ) {
     if (!file) {
@@ -50,7 +52,7 @@ export class PostsController {
       // Subir imagen a Cloudinary
       const imageUrl = await this.uploadService.uploadImageToCloudinary(file);
 
-      // ✅ PARSEAR los arrays que vienen como strings
+      
       const taggedUsersArray = body.taggedUsers 
         ? body.taggedUsers.split(',').filter((tag: string) => tag.trim() !== '') 
         : [];
@@ -59,7 +61,7 @@ export class PostsController {
         ? body.hashtags.split(',').filter((tag: string) => tag.trim() !== '') 
         : [];
 
-      // ✅ CREAR el DTO correctamente
+      
       const createPostDto: CreatePostDTO = {
         image: imageUrl,
         description: body.description || '',
@@ -93,4 +95,29 @@ export class PostsController {
     const postsData = await this.postsService.obtainUserPosts(userId);
     return postsData;
   }
+
+  // ✅ Obtener un post individual con detalles
+  @Get(':id')
+  @UseGuards(AuthGuard)
+  async getPostById(@Param('id') postId: string, @Request() req) {
+    const userId = req.user.userId;
+    return await this.postsService.getPostWithDetails(postId, userId);
+  }
+
+  // ✅ Like a un post
+  @Post(':id/like')
+  @UseGuards(AuthGuard)
+  async likePost(@Param('id') postId: string, @Request() req) {
+    const userId = req.user.userId;
+    return await this.postsService.toggleLike(postId, userId);
+  }
+
+  // ✅ Dislike a un post
+  @Post(':id/dislike')
+  @UseGuards(AuthGuard)
+  async dislikePost(@Param('id') postId: string, @Request() req) {
+    const userId = req.user.userId;
+    return await this.postsService.toggleDislike(postId, userId);
+  } 
+
 }

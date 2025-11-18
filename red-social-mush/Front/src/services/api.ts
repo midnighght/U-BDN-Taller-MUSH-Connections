@@ -5,19 +5,19 @@ export const api = {
  
   
   async login(email: string, password: string) {
-    console.log('🔐 Preparando login para:', email);
+    console.log('Preparando login para:', email);
     const credentials: loginDTO = { email:email, password:password };
     try {
-      console.log('📨 Enviando petición POST a /auth/login...');
+      console.log('Enviando petición POST a /auth/login...');
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST', // ← IMPORTANTE: POST no GET
+        method: 'POST', 
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(credentials),
       });
 
-      console.log('📡 Respuesta recibida. Status:', response.status);
+      console.log('Respuesta recibida. Status:', response.status);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -82,17 +82,17 @@ export const api = {
       // Verificar que hay contenido antes de parsear
       const text = await response.text();
       if (!text || text.trim() === '') {
-        console.warn('⚠️ Respuesta vacía del servidor');
+        console.warn('Respuesta vacía del servidor');
         return null;
       }
 
       const userData = JSON.parse(text);
-      console.log('✅ Datos del usuario obtenidos:', userData.communities);
+      console.log('Datos del usuario obtenidos:', userData.communities);
       return userData;
 
     } catch (error: any) {
-      console.error("❌ Error al obtener los datos del usuario:", error);
-      // IMPORTANTE: Retornar null en lugar de no retornar nada
+      console.error("Error al obtener los datos del usuario:", error);
+      
       return null;
     }
   
