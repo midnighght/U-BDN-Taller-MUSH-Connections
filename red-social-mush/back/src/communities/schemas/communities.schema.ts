@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import type { Date } from 'mongoose';
 
-
 export type CommunityDocument = Community & Document;
 
 @Schema()
@@ -17,13 +16,14 @@ export class Community {
   @Prop()
   description?: string;
 
-  @Prop({ type: Boolean })
+  @Prop({ type: Boolean, default: false })
   isPrivate: boolean;
 
-  @Prop({ type: [Types.ObjectId], required: true })
+  // ✅ CAMBIO IMPORTANTE: superAdminID debe ser un ObjectId único, NO un array
+  @Prop({ type: Types.ObjectId, required: true })
   superAdminID: Types.ObjectId;
 
-  @Prop({ type: [Types.ObjectId], required: true })
+  @Prop({ type: [Types.ObjectId], default: [] })
   adminID: Types.ObjectId[];
 
   @Prop({ type: [Types.ObjectId], default: [] })

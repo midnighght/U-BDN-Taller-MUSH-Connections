@@ -1,4 +1,3 @@
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
@@ -13,13 +12,13 @@ export enum NotificationType {
   COMMUNITY_INVITE = 'community_invite',
 }
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, collection: 'notifications' })
 export class Notification {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  recipientID: Types.ObjectId; // Quien recibe la notificación
+  recipientID: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  senderID: Types.ObjectId; // Quien genera la notificación
+  senderID: Types.ObjectId;
 
   @Prop({ 
     type: String, 
@@ -29,16 +28,13 @@ export class Notification {
   type: NotificationType;
 
   @Prop({ type: String, required: true })
-  message: string; // Ej: "Juan te envió una solicitud de amistad"
+  message: string;
 
-  @Prop({ type: Types.ObjectId }) // ID del recurso relacionado (post, comment, etc.)
+  @Prop({ type: Types.ObjectId, required: false })
   relatedID?: Types.ObjectId;
 
-  @Prop({ type: Boolean, default: false })
+  @Prop({ type: Boolean, default: false, required: true })
   isRead: boolean;
-
-  @Prop({ type: Date, default: Date.now })
-  createdAt: Date;
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);

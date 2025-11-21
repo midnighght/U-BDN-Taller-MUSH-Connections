@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import NotificationsPanel from './NotificationsPanel';
 import logoGato from '../assets/logo-gato.png';
 
 const Header = () => {
@@ -16,15 +17,11 @@ const Header = () => {
     navigate("/home");
   };
 
-  const redirectNotifications = () => {
-    navigate("/notifications");
-  };
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(''); // Limpiar búsqueda
+      setSearchQuery('');
     }
   };
 
@@ -81,15 +78,17 @@ const Header = () => {
             👤
           </button>
           
-          <button 
-            onClick={redirectNotifications}
-            className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition relative"
-            title="Notificaciones"
+          {/* ✅ BOTÓN DE SOLICITUDES DE AMISTAD */}
+          <button
+            onClick={() => navigate('/requests?tab=friends')}
+            className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
+            title="Solicitudes de amistad"
           >
-            🔔
-            {/* Badge de notificaciones no leídas (implementar después) */}
-            {/* <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span> */}
+            👋
           </button>
+          
+          {/* ✅ INTEGRAR NotificationsPanel AQUÍ */}
+          <NotificationsPanel />
           
           <button
             onClick={logout}

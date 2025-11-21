@@ -92,7 +92,7 @@ const LoginPage = () => {
         {/* Imagen derecha visible solo en pantallas grandes */}
         <div className="hidden md:flex flex-1 items-center justify-center p-10">
           <img
-            src="./assets/gatoLoginDerecha.png"
+            src="./assets/gatoLoginIzquierda.png"
             alt="Mush Cat"
             className="w-96 h-auto drop-shadow-2xl"
           />

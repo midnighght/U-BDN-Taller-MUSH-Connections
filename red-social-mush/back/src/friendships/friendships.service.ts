@@ -8,8 +8,8 @@ import { NotificationType } from 'src/notifications/schemas/notification.schema'
 @Injectable()
 export class FriendshipsService {
   constructor(
-    @InjectModel(Friendship.name) private readonly friendshipModel: Model<FriendshipDocument>,
-    private readonly notificationsService: NotificationsService,
+    @InjectModel(Friendship.name) private friendshipModel: Model<FriendshipDocument>,
+    private notificationsService: NotificationsService,
   ) {}
 
   // ✅ Enviar solicitud de amistad
@@ -38,27 +38,26 @@ export class FriendshipsService {
       }
     }
 
-    // Crear solicitud
+    // Crear solicitud y obtener el documento guardado
+    const friendship = await new this.friendshipModel({
+      requesterID: requesterObjectId,
+      recipientID: recipientObjectId,
+      status: FriendshipStatus.PENDING,
+    }).save();
 
-      const friendship = new this.friendshipModel({
-        requesterID: requesterObjectId,
-        recipientID: recipientObjectId,
-        status: FriendshipStatus.PENDING,
-      });
+    // ✅ Ahora el _id está disponible
+    const friendshipId = String(friendship._id);
 
-      await friendship.save();
 
-      // Convertir el _id explícitamente a string
-      const friendshipId = (friendship._id as Types.ObjectId).toString();
 
-      // Crear notificación
-      await this.notificationsService.createNotification({
-        recipientID: recipientId,
-        senderID: requesterId,
-        type: NotificationType.FRIEND_REQUEST,
-        message: 'te envió una solicitud de amistad',
-        relatedID: friendshipId,
-      });
+    // Crear notificación
+    await this.notificationsService.createNotification({
+      recipientID: recipientId,
+      senderID: requesterId,
+      type: NotificationType.FRIEND_REQUEST,
+      message: 'te envió una solicitud de amistad',
+      relatedID: friendshipId,
+    });
 
     return { success: true, message: 'Solicitud enviada' };
   }

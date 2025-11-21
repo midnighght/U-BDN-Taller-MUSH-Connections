@@ -9,7 +9,7 @@ export type PostDocument = Post & Document;
 export class Post {
   
 
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   authorID: Types.ObjectId;
 
   @Prop({type : String})

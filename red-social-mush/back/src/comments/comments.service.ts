@@ -30,37 +30,40 @@ export class CommentsService {
 
   // ✅ Obtener comentarios de un post (con estructura jerárquica tipo Instagram)
   async getCommentsByPost(postId: string) {
-    const comments = await this.commentModel
-      .find({ postID: postId })
-      .populate('authorID', 'username userPhoto')
-      .sort({ createdAt: 1 }) // Más antiguos primero
-      .lean()
-      .exec();
+  // Convertir el string a ObjectId para la búsqueda
+  const postObjectId = new Types.ObjectId(postId);
+  
+  const comments = await this.commentModel
+    .find({ postID: postObjectId }) // ✅ Usar ObjectId, no string
+    .populate('authorID', 'username userPhoto')
+    .sort({ createdAt: 1 })
+    .lean()
+    .exec();
 
-    // Organizar en estructura jerárquica
-    const commentMap = new Map();
-    const rootComments: any[] = [];
+  console.log('📝 Comentarios encontrados en DB:', comments.length); // Debug
 
-    // Primera pasada: crear el mapa
-    comments.forEach((comment: any) => {
-      comment.replies = [];
-      commentMap.set(comment._id.toString(), comment);
-    });
+  // Organizar en estructura jerárquica
+  const commentMap = new Map();
+  const rootComments: any[] = [];
 
-    // Segunda pasada: organizar jerarquía
-    comments.forEach((comment: any) => {
-      if (comment.parentCommentID) {
-        const parent = commentMap.get(comment.parentCommentID.toString());
-        if (parent) {
-          parent.replies.push(comment);
-        }
-      } else {
-        rootComments.push(comment);
+  comments.forEach((comment: any) => {
+    comment.replies = [];
+    commentMap.set(comment._id.toString(), comment);
+  });
+
+  comments.forEach((comment: any) => {
+    if (comment.parentCommentID) {
+      const parent = commentMap.get(comment.parentCommentID.toString());
+      if (parent) {
+        parent.replies.push(comment);
       }
-    });
+    } else {
+      rootComments.push(comment);
+    }
+  });
 
-    return rootComments;
-  }
+  return rootComments;
+}
 
   // ✅ Eliminar comentario (y sus respuestas)
   async deleteComment(commentId: string, userId: string) {

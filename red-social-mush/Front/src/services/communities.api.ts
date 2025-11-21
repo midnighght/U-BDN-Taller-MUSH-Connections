@@ -1,77 +1,406 @@
-import  type { CreateComunityDTO } from "./dto/communities.api.dto";
+import type { CreateComunityDTO } from "./dto/communities.api.dto";
+
 const API_BASE_URL = 'http://localhost:3000';
+
 export const communities_api = {
-    async createComunity(name: String, description: String, hashtags: String, image:String, token: string){
-        const noSpacesHashtags = hashtags.replace(/\s/g, "");
-        const splitHashtag = noSpacesHashtags.split("#");
-        splitHashtag.splice(0,1);
-        const comunityData: CreateComunityDTO = {
-            name: name,
-            description: description,
-            hashtags: splitHashtag,
-            image: image,
-            token: token
+  async createComunity(name: String, description: String, hashtags: String, image: String, token: string) {
+    const noSpacesHashtags = hashtags.replace(/\s/g, "");
+    const splitHashtag = noSpacesHashtags.split("#");
+    splitHashtag.splice(0, 1);
+    const comunityData: CreateComunityDTO = {
+      name: name,
+      description: description,
+      hashtags: splitHashtag,
+      image: image,
+      token: token
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/createComunity`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(comunityData),
+      });
+      if (response.ok) {
+        console.log('Comunidad Creada');
+      }
+    } catch (error) {
+      console.log("Error al crear la comunidad:", error);
+    }
+  },
+
+  async getMyCommunitiesDetailed(token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/my-communities`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
-        try {
-    const response =  await fetch(`${API_BASE_URL}/communities/createComunity`, {
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener comunidades');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching communities:', error);
+      throw error;
+    }
+  },
+
+  async leaveCommunity(communityId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/leaveCommunity`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ communityId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al salir de la comunidad');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('❌ Error al salir de comunidad:', error);
+      throw error;
+    }
+  },
+
+  // ✅ NUEVOS ENDPOINTS NECESARIOS
+
+  /**
+   * Obtener detalles de una comunidad específica
+   */
+  async getCommunityById(communityId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener la comunidad');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching community:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtener posts de una comunidad
+   */
+  async getCommunityPosts(communityId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/posts`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener posts de la comunidad');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching community posts:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Solicitar unirse a una comunidad privada
+   */
+ async joinCommunity(communityId: string, token: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/communities/${communityId}/join`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(comunityData
-      ),
+      }
     });
-    if (response.ok){
-      console.log('Comunidad Creada');
-    } 
-  }catch (error) {
-    console.log("Error al crear la comunidad:", error);
-  }
-    },
-  async getMyCommunitiesDetailed(token: string) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/communities/my-communities`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error('Error al obtener comunidades');
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching communities:', error);
-            throw error;
-        }
-    },
 
-    async leaveCommunity(communityId: string, token: string) {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Error al unirse' }));
+      throw new Error(errorData.message || 'Error al unirse a la comunidad');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error joining community:', error);
+    throw error;
+  }
+},
+
+/**
+ * Solicitar unirse a una comunidad privada
+ */
+async requestJoin(communityId: string, token: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/communities/leaveCommunity`, {
-      method: 'DELETE',
+    const response = await fetch(`${API_BASE_URL}/communities/${communityId}/request-join`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ communityId }), // ✅ Enviar como objeto
+      }
     });
-    
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al salir de la comunidad');
+      const errorData = await response.json().catch(() => ({ message: 'Error al solicitar' }));
+      throw new Error(errorData.message || 'Error al solicitar unirse');
     }
-    
+
     return await response.json();
-  } catch (error) {
-    console.error('❌ Error al salir de comunidad:', error);
+  } catch (error: any) {
+    console.error('Error requesting to join:', error);
     throw error;
   }
-}
+},
 
+  /**
+   * Obtener solicitudes pendientes (solo admin/superAdmin)
+   */
+  async getPendingRequests(communityId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/pending-requests`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-}
+      if (!response.ok) {
+        throw new Error('Error al obtener solicitudes pendientes');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching pending requests:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Aceptar solicitud de unión
+   */
+  async acceptRequest(communityId: string, userId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/accept-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al aceptar solicitud');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error accepting request:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Rechazar solicitud de unión
+   */
+  async rejectRequest(communityId: string, userId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/reject-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al rechazar solicitud');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Eliminar miembro (admin/superAdmin)
+   */
+  async removeMember(communityId: string, userId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/remove-member`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al eliminar miembro');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error removing member:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Ascender a admin (solo superAdmin)
+   */
+  async promoteToAdmin(communityId: string, userId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/promote-admin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al ascender a admin');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error promoting to admin:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Degradar de admin a member (solo superAdmin)
+   */
+  async demoteFromAdmin(communityId: string, userId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/demote-admin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al degradar admin');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error demoting admin:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Transferir propiedad (solo superAdmin)
+   */
+  async transferOwnership(communityId: string, newOwnerId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/transfer-ownership`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newOwnerId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al transferir propiedad');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error transferring ownership:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Eliminar comunidad (solo superAdmin)
+   */
+  async deleteCommunity(communityId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al eliminar comunidad');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting community:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtener miembros de la comunidad
+   */
+  async getCommunityMembers(communityId: string, token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/members`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener miembros');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      throw error;
+    }
+  }
+};

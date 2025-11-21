@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { SearchService } from './search.service';
 import { AuthGuard } from 'src/auth/guards/auth.guards';
 
@@ -8,7 +8,7 @@ export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @Get()
-  async globalSearch(@Query('query') query: string) {
+  async globalSearch(@Query('query') query: string,  @Request() req) {
     if (!query || query.trim() === '') {
       return {
         users: [],
@@ -18,6 +18,7 @@ export class SearchController {
       };
     }
 
-    return await this.searchService.globalSearch(query.trim());
+    const viewerId = req.user.userId;
+    return await this.searchService.globalSearch(query.trim(), viewerId);
   }
 }

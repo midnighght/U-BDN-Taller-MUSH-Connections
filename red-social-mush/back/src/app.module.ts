@@ -12,10 +12,12 @@ import { UploadModule } from './upload/upload.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmailModule } from './email/email.module';
 import { SearchModule } from './search/search.module';
-import { FriendshipsController } from './friendships/friendships.controller';
-import { FriendshipsService } from './friendships/friendships.service';
 import { FriendshipsModule } from './friendships/friendships.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { BlocksService } from './blocks/blocks.service';
+import { BlocksModule } from './blocks/blocks.module';
+import { RequestsModule } from './requests/requests.module';
+import { RequestsService } from './requests/requests.service';
 
 @Module({
   imports: [
@@ -40,8 +42,10 @@ import { NotificationsModule } from './notifications/notifications.module';
     SearchModule,
     FriendshipsModule,
     NotificationsModule,
+    BlocksModule,
+    RequestsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, BlocksService],
 })
 export class AppModule {}

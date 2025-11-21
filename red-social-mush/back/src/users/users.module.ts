@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './users.service';
 import { User, UserSchema } from './schemas/user.schema';
@@ -8,13 +8,15 @@ import { UploadService } from 'src/upload/upload.service';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { Post, PostSchema } from 'src/posts/schemas/posts.schema';
 import { FriendshipsModule } from 'src/friendships/friendships.module';
+import { CommunitiesModule } from 'src/communities/communities.module';
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema},
         {name: Post.name, schema: PostSchema}
        
-    ]), UploadModule, CloudinaryModule, FriendshipsModule
+    ]), UploadModule, CloudinaryModule, FriendshipsModule, 
+    forwardRef(() => CommunitiesModule)
   ],
   providers: [UsersService,UploadService],
   exports: [UsersService, MongooseModule],

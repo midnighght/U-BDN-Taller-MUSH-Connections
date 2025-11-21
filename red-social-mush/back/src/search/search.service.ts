@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { Community, CommunityDocument } from 'src/communities/schemas/communities.schema';
 import { Post, PostDocument } from 'src/posts/schemas/posts.schema';
@@ -13,74 +13,61 @@ export class SearchService {
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
   ) {}
 
-  async globalSearch(query: string) {
+  async globalSearch(query: string, viewerId: string) {
     const searchRegex = new RegExp(query, 'i');
 
-    // Buscar usuarios (solo públicos y verificados)
+    // ✅ CAMBIO: Buscar TODOS los usuarios, incluidos los privados
     const users = await this.userModel
       .find({
-        $and: [
-          {
-            $or: [
-              { username: searchRegex },
-            ],
-          },
-          { isPrivate: false },
-          { isVerified: true },
-        ],
+        username: searchRegex,
+        _id: { $ne: viewerId }, // No incluir al usuario actual
       })
-      .select('username userPhoto')
+      .select('username userPhoto isPrivate') // ✅ Incluir isPrivate
       .limit(10)
       .lean()
       .exec();
 
-    // Buscar comunidades (solo públicas)
+    // Buscar comunidades públicas
     const communities = await this.communityModel
       .find({
-        $and: [
-          {
-            $or: [
-              { name: searchRegex },
-              { description: searchRegex },
-              { hashtags: searchRegex },
-            ],
-          },
-          { isPrivate: false },
+        $or: [
+          { name: searchRegex },
+          { hashtags: { $in: [searchRegex] } }
         ],
+        isPrivate: false // Solo comunidades públicas
       })
-      .select('name description mediaURL hashtags memberID adminID superAdminID')
+      .select('name description mediaURL hashtags memberID')
       .limit(10)
       .lean()
       .exec();
 
-    // Buscar posts (solo de usuarios públicos)
+    // Buscar posts (solo de usuarios públicos o amigos)
     const posts = await this.postModel
       .find({
         $or: [
           { textBody: searchRegex },
-          { hashtags: searchRegex },
-        ],
+          { hashtags: { $in: [searchRegex] } }
+        ]
       })
-      .populate({
-        path: 'authorID',
-        select: 'username userPhoto isPrivate',
-      })
-      .select('mediaURL textBody hashtags authorID createdAt reactionUp reactionDown comunityID')
-      .limit(15)
+      .populate('authorID', 'username userPhoto isPrivate')
+      .select('mediaURL textBody hashtags createdAt reactionUp reactionDown comunityID')
+      .limit(20)
       .lean()
       .exec();
 
-    // Filtrar posts de usuarios privados
-    const publicPosts = posts.filter((post: any) => 
-      post.authorID && !post.authorID.isPrivate
-    );
+    // ✅ Filtrar posts de usuarios privados (esto lo manejará el frontend también)
+    const filteredPosts = posts.filter((post: any) => {
+      // Mostrar si el autor no es privado, o si es el mismo viewer
+      return !post.authorID?.isPrivate || post.authorID?._id?.toString() === viewerId;
+    });
 
     return {
       users: users.map(user => ({
         _id: user._id,
         username: user.username,
         userPhoto: user.userPhoto,
-        type: 'user',
+        isPrivate: user.isPrivate, // ✅ Incluir indicador de privacidad
+        type: 'user'
       })),
       communities: communities.map(community => ({
         _id: community._id,
@@ -89,25 +76,25 @@ export class SearchService {
         mediaURL: community.mediaURL,
         hashtags: community.hashtags,
         membersCount: community.memberID?.length || 0,
-        type: 'community',
+        type: 'community'
       })),
-      posts: publicPosts.map((post: any) => ({
+      posts: filteredPosts.map((post: any) => ({
         _id: post._id,
         mediaURL: post.mediaURL,
         textBody: post.textBody,
         hashtags: post.hashtags,
         author: {
-          _id: post.authorID._id,
-          username: post.authorID.username,
-          userPhoto: post.authorID.userPhoto,
+          _id: post.authorID?._id,
+          username: post.authorID?.username,
+          userPhoto: post.authorID?.userPhoto,
         },
         likesCount: post.reactionUp?.length || 0,
         dislikesCount: post.reactionDown?.length || 0,
         comunityID: post.comunityID,
         createdAt: post.createdAt,
-        type: 'post',
+        type: 'post'
       })),
-      total: users.length + communities.length + publicPosts.length,
+      total: users.length + communities.length + filteredPosts.length
     };
   }
 }

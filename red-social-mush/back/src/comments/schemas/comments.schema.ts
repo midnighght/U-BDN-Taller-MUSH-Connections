@@ -10,8 +10,8 @@ export class Comment {
   @Prop({ type: Types.ObjectId, required: true })
   postID: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, required: true })
-  authorID: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+authorID: Types.ObjectId;
 
   @Prop({ required: true })
   textBody: string;

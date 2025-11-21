@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import uploadIcon from '../assets/uploadIcon.png';
 import { posts_api } from '../services/posts.api';
-const PostCard = () => {
+
+interface PostCardProps {
+  communityId?: string; // ✅ Prop opcional para comunidad
+  onPostCreated?: () => void; // ✅ Callback opcional después de crear
+}
+
+const PostCard = ({ communityId, onPostCreated }: PostCardProps) => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [image, setImage] = useState<File | null>(null);
@@ -10,30 +16,27 @@ const PostCard = () => {
   const [description, setDescription] = useState('');
   const [taggedUsers, setTaggedUsers] = useState('');
   const [hashtags, setHashtags] = useState('');
-  const [uploading, setUploading] = useState(false); // Estado de carga
-  const [error, setError] = useState<string>(''); // Estado de error
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const token = localStorage.getItem('auth_token');
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validar tipo
       if (!file.type.startsWith('image/')) {
         setError('Por favor selecciona una imagen válida');
         return;
       }
 
-      // Validar tamaño (10MB)
       if (file.size > 10 * 1024 * 1024) {
-        setError('La imagen no puede superar los 5MB');
+        setError('La imagen no puede superar los 10MB');
         return;
       }
 
       setImage(file);
       setError('');
       
-      // Crear preview local
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -56,23 +59,33 @@ const PostCard = () => {
     setError('');
 
     try {
-      // Crear FormData
-      const response = await posts_api.createPost( image, description, taggedUsers, hashtags, token);
+      // ✅ Pasar communityId si existe
+      const response = await posts_api.createPost(
+        image, 
+        description, 
+        taggedUsers, 
+        hashtags, 
+        token,
+        communityId // ✅ Nuevo parámetro
+      );
 
-      if (response){
+      if (response) {
         console.log('Publicación creada');
-      }
-      // Cerrar modal y limpiar
-      setIsOpen(false);
-      setImage(null);
-      setImagePreview(null);
-      setDescription('');
-      setTaggedUsers('');
-      setHashtags('');
-      setError('');
+        
+        // Cerrar modal y limpiar
+        setIsOpen(false);
+        setImage(null);
+        setImagePreview(null);
+        setDescription('');
+        setTaggedUsers('');
+        setHashtags('');
+        setError('');
 
-      // Opcional: Recargar posts o mostrar notificación de éxito
-      
+        // ✅ Llamar callback si existe
+        if (onPostCreated) {
+          onPostCreated();
+        }
+      }
     } catch (error: any) {
       console.error('❌ Error al subir la publicación:', error);
       setError(error.message || 'Error al crear el post');
@@ -97,7 +110,9 @@ const PostCard = () => {
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-3xl flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">Crear Publicación ✨</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                {communityId ? 'Crear Publicación en Comunidad ✨' : 'Crear Publicación ✨'}
+              </h2>
               <button 
                 onClick={() => setIsOpen(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -107,9 +122,8 @@ const PostCard = () => {
               </button>
             </div>
 
-            {/* Contenido */}
+            {/* Contenido - resto del código igual... */}
             <div className="p-6 space-y-5">
-              {/* Usuario actual */}
               <div className="flex items-center mb-4">
                 <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full"></div>
                 <span className="ml-3 font-semibold text-gray-800 text-lg">
@@ -117,7 +131,6 @@ const PostCard = () => {
                 </span>
               </div>
 
-              {/* Subir imagen (OBLIGATORIO) */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   Imagen * <span className="text-orange-500">(Obligatorio)</span>
@@ -147,7 +160,7 @@ const PostCard = () => {
                       <>
                         <span className="text-5xl mb-2">📷</span>
                         <span className="text-gray-600 font-medium">Haz clic para subir una imagen</span>
-                        <span className="text-gray-400 text-sm mt-1">PNG, JPG, GIF, WEBP (máximo 5MB)</span>
+                        <span className="text-gray-400 text-sm mt-1">PNG, JPG, GIF, WEBP (máximo 10MB)</span>
                       </>
                     )}
                   </label>
@@ -167,14 +180,12 @@ const PostCard = () => {
                 )}
               </div>
 
-              {/* Mensaje de error */}
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-red-600 text-sm">❌ {error}</p>
                 </div>
               )}
 
-              {/* Descripción */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   Descripción 💭
@@ -189,7 +200,6 @@ const PostCard = () => {
                 />
               </div>
 
-              {/* Hashtags */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   Hashtags 🏷️
@@ -205,7 +215,6 @@ const PostCard = () => {
                 <p className="text-xs text-gray-500 mt-1">Agrega # antes de cada palabra</p>
               </div>
 
-              {/* Etiquetar usuarios */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   Etiquetar usuarios 👥
@@ -221,7 +230,6 @@ const PostCard = () => {
                 <p className="text-xs text-gray-500 mt-1">Separa los usuarios con comas</p>
               </div>
 
-              {/* Botones de acción */}
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"

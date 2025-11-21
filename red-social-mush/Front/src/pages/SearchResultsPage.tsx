@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import type { SearchResults } from '../services/search.api';
+import PostGrid from '../components/PostGrid';
 import { search_api } from '../services/search.api';
+import type { SearchResults } from '../services/search.api';
 import { useAuth } from '../hooks/useAuth';
 
 const SearchResultsPage = () => {
@@ -51,6 +52,10 @@ const SearchResultsPage = () => {
   };
 
   const filtered = filteredResults();
+
+  const handleCommunityClick = (communityId: string) => {
+    navigate(`/communities/${communityId}`);
+  };
 
   return (
     <div className="min-h-screen bg-[#fff8f5]">
@@ -121,18 +126,28 @@ const SearchResultsPage = () => {
                       onClick={() => navigate(`/users/${user._id}`)}
                       className="bg-white rounded-xl p-4 shadow hover:shadow-md transition cursor-pointer"
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-300 to-yellow-400 overflow-hidden">
-                          {user.userPhoto ? (
-                            <img src={user.userPhoto} alt={user.username} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white text-xl">👤</div>
-                          )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-300 to-yellow-400 overflow-hidden">
+                            {user.userPhoto ? (
+                              <img src={user.userPhoto} alt={user.username} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white text-xl">👤</div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800">{user.username}</p>
+                            <p className="text-sm text-gray-500">Ver perfil →</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-gray-800">{user.username}</p>
-                          <p className="text-sm text-gray-500">Ver perfil →</p>
-                        </div>
+                        
+                        {/* ✅ Indicador de perfil privado */}
+                        {user.isPrivate && (
+                          <div className="flex items-center gap-1 text-gray-500 text-sm">
+                            <span>🔒</span>
+                            <span>Privado</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -148,6 +163,7 @@ const SearchResultsPage = () => {
                   {filtered.communities.map(community => (
                     <div
                       key={community._id}
+                      onClick={() => handleCommunityClick(community._id)}
                       className="bg-white rounded-xl p-4 shadow hover:shadow-md transition cursor-pointer"
                     >
                       <div className="flex items-start space-x-3">
@@ -181,45 +197,11 @@ const SearchResultsPage = () => {
             {filtered.posts.length > 0 && (
               <section>
                 <h2 className="text-xl font-bold text-gray-800 mb-4">Publicaciones</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {filtered.posts.map(post => (
-                    <div
-                      key={post._id}
-                      className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition cursor-pointer"
-                    >
-                      <div className="aspect-square bg-gray-200">
-                        <img 
-                          src={post.mediaURL} 
-                          alt="Post" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://via.placeholder.com/400?text=No+disponible';
-                          }}
-                        />
-                      </div>
-                      <div className="p-3">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div className="w-6 h-6 rounded-full bg-gray-300 overflow-hidden">
-                            {post.author.userPhoto ? (
-                              <img src={post.author.userPhoto} alt={post.author.username} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs">👤</div>
-                            )}
-                          </div>
-                          <span className="text-sm font-semibold text-gray-700">{post.author.username}</span>
-                        </div>
-                        <p className="text-xs text-gray-600 line-clamp-2">{post.textBody || 'Sin descripción'}</p>
-                        {post.hashtags && post.hashtags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {post.hashtags.slice(0, 2).map((tag, index) => (
-                              <span key={index} className="text-xs text-blue-500">#{tag}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <PostGrid 
+                  posts={filtered.posts} 
+                  cols={3} 
+                  showAuthor={true} 
+                />
               </section>
             )}
           </div>

@@ -15,23 +15,24 @@ export class PostsService {
      private readonly commentsService: CommentsService
   ) {}
 
-  async createPostInDb(@Body() createPostDto: CreatePostDTO): Promise<boolean> {
-    try {
-      const post = new this.postModel({
-        mediaURL: createPostDto.image,
-        authorID: createPostDto.userId,
-        textBody: createPostDto.description,
-        usertags: createPostDto.taggedUsers,
-        hashtags: createPostDto.hashtags
-      });
-      
-      await post.save();
-      return true;
-    } catch (error) {
-      console.error('Error saving post:', error);
-      return false;
-    }
+  async createPostInDb(@Body() createPostDto: CreatePostDTO, communityId?: string): Promise<boolean> {
+  try {
+    const post = new this.postModel({
+      mediaURL: createPostDto.image,
+      authorID: createPostDto.userId,
+      textBody: createPostDto.description,
+      usertags: createPostDto.taggedUsers,
+      hashtags: createPostDto.hashtags,
+      ...(communityId && { comunityID: communityId }) // ✅ Agregar communityId si existe
+    });
+    
+    await post.save();
+    return true;
+  } catch (error) {
+    console.error('Error saving post:', error);
+    return false;
   }
+}
 
   async obtainUserPosts(userId: string) {
     try {
@@ -49,32 +50,31 @@ export class PostsService {
     }
   }
 
-   async getPostWithDetails(postId: string, currentUserId: string) {
-    const post = await this.postModel
-      .findById(postId)
-      .populate('authorID', 'username userPhoto')
-      .lean()
-      .exec();
+  async getPostWithDetails(postId: string, currentUserId: string) {
+  const post = await this.postModel
+    .findById(postId)
+    .populate('authorID', 'username userPhoto') // Esto ya lo tienes
+    .lean()
+    .exec();
 
-    if (!post) {
-      throw new BadRequestException('Post no encontrado');
-    }
-
-    const hasLiked = post.reactionUp.some((id: any) => id.toString() === currentUserId);
-    const hasDisliked = post.reactionDown.some((id: any) => id.toString() === currentUserId);
-    
-    // ✅ Obtener conteo de comentarios desde CommentsService
-    const commentsCount = await this.commentsService.getCommentCount(postId);
-
-    return {
-      ...post,
-      likesCount: post.reactionUp.length,
-      dislikesCount: post.reactionDown.length,
-      commentsCount, // ✅ AGREGAR
-      hasLiked,
-      hasDisliked,
-    };
+  if (!post) {
+    throw new BadRequestException('Post no encontrado');
   }
+
+  const hasLiked = post.reactionUp.some((id: any) => id.toString() === currentUserId);
+  const hasDisliked = post.reactionDown.some((id: any) => id.toString() === currentUserId);
+  
+  const commentsCount = await this.commentsService.getCommentCount(postId);
+
+  return {
+    ...post,
+    likesCount: post.reactionUp.length,
+    dislikesCount: post.reactionDown.length,
+    commentsCount,
+    hasLiked,
+    hasDisliked,
+  };
+}
 
   // ✅ Toggle Like
   async toggleLike(postId: string, userId: string) {

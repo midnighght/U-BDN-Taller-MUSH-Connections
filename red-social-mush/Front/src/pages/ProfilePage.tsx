@@ -1,11 +1,11 @@
 import Header from '../components/Header';
+import PostGrid from '../components/PostGrid';
 import { posts_api } from '../services/posts.api.ts';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api.ts';
 import { useNavigate } from 'react-router-dom';
 
-// ✅ AGREGAR INTERFAZ PARA LOS POSTS
 interface Post {
   _id: string;
   mediaURL: string;
@@ -18,7 +18,7 @@ interface Post {
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
-  const [posts, setPosts] = useState<Post[]>([]); // ✅ TIPADO
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isEditOpen, setEditOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [communitiesCount, setCommunitiesCount] = useState(0);
@@ -45,7 +45,7 @@ const ProfilePage = () => {
       }
     };
     fetchUserData();
-  }, [token, newProfilePic]); // ✅ Mejor usar token como dependencia
+  }, [token, newProfilePic]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -53,13 +53,13 @@ const ProfilePage = () => {
         if (!token) return console.error('Token is null');
         const response = await posts_api.obtainUserPosts(token);
         console.log('posts: ', response);
-        setPosts(response); // ✅ Ya no necesitas JSON.parse porque el service devuelve array
+        setPosts(response);
       } catch (error) {
         console.error('Error:', error);
       }
     };
     fetchPosts();
-  }, [token]); // ✅ Mejor usar token como dependencia
+  }, [token]);
 
   const handlePrivacyChange = async (privacy: boolean) => {
     setIsPrivate(privacy);
@@ -96,7 +96,7 @@ const ProfilePage = () => {
       try {
         const response = await api.updatePhoto(newProfilePic, token);
         if (response) {
-          setProfilePic(newProfilePic); // ✅ Actualizar también profilePic
+          setProfilePic(newProfilePic);
           setNewProfilePic('');
         }
       } catch (error) {
@@ -176,65 +176,20 @@ const ProfilePage = () => {
 
           {/* Feed principal */}
           <section className="flex-1">
-            {/* ✅ AGREGAR MENSAJE SI NO HAY POSTS */}
-            {posts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-center">
-                <span className="text-6xl mb-4">📸</span>
-                <p className="text-gray-600 text-lg">No hay publicaciones todavía</p>
-                <p className="text-gray-500 text-sm">¡Crea tu primera publicación!</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-6">
-                {posts.map((post, i) => ( // ✅ Usar 'post' completo en lugar de destructurar
-                  <article key={post._id || i} className="bg-white rounded-2xl shadow-md p-4">
-                    <header className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                        {profilePic ? (
-                          <img src={profilePic} alt="perfil" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-xl">👤</span>
-                        )}
-                      </div>
-                      <h3 className="text-lg text-gray-600 font-semibold">{user?.username}</h3>
-                    </header>
-
-                    {/* ✅ IMAGEN DEL POST CON FALLBACK */}
-                    <div className="bg-orange-100 rounded-lg h-40 mb-3 overflow-hidden">
-                      <img 
-                        src={post.mediaURL} 
-                        alt="Post" 
-                        className="w-full h-full object-cover"
-                        loading="lazy" // ✅ Carga diferida
-                        onError={(e) => {
-                          // ✅ Si falla, mostrar placeholder
-                          e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Imagen+no+disponible';
-                        }}
-                      />
-                    </div>
-
-                    <p className="text-sm text-gray-500 line-clamp-3">
-                      {post.textBody || 'Sin descripción'}
-                    </p>
-
-                    {/* ✅ OPCIONAL: Mostrar hashtags si los hay */}
-                    {post.hashtags && post.hashtags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {post.hashtags.map((tag, index) => (
-                          <span key={index} className="text-xs text-blue-500">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </article>
-                ))}
-              </div>
-            )}
+            <PostGrid 
+              posts={posts} 
+              cols={2} 
+              showAuthor={false}
+              currentUser={{
+                username: user?.username || '',
+                userPhoto: profilePic
+              }}
+            />
           </section>
         </div>
       </div>
 
-      {/* --- MODAL EDITAR PERFIL --- */}
+      {/* MODAL EDITAR PERFIL */}
       {isEditOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 backdrop-blur-sm">
           <div className="bg-gradient-to-b from-orange-50 to-yellow-50 p-8 rounded-3xl shadow-2xl w-[420px] text-center relative">
@@ -248,7 +203,6 @@ const ProfilePage = () => {
 
             <div className="flex flex-col items-center mb-4">
               <div className="w-32 h-32 rounded-full bg-orange-100 shadow-inner mb-4 overflow-hidden flex items-center justify-center">
-                {/* ✅ MOSTRAR newProfilePic si existe, sino profilePic */}
                 {newProfilePic ? (
                   <img src={newProfilePic} alt="preview" className="w-full h-full object-cover" />
                 ) : profilePic ? (
@@ -267,7 +221,7 @@ const ProfilePage = () => {
             <textarea
               value={newBio}
               onChange={(e) => setNewBio(e.target.value)}
-              placeholder={bio || "Escribe una breve descripción..."} // ✅ Mostrar bio actual como placeholder
+              placeholder={bio || "Escribe una breve descripción..."}
               className="w-full h-24 border border-orange-200 rounded-xl p-3 text-sm text-gray-700 focus:ring-2 focus:ring-orange-300 mb-4 resize-none"
             />
 
@@ -283,7 +237,7 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* --- MODAL AJUSTES --- */}
+      {/* MODAL AJUSTES */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
           <div className="bg-white rounded-2xl shadow-lg p-6 w-[400px] relative">

@@ -4,6 +4,7 @@ interface SearchUser {
   _id: string;
   username: string;
   userPhoto?: string;
+  isPrivate?: boolean; // ✅ NUEVO: indicador de privacidad
   type: 'user';
 }
 
