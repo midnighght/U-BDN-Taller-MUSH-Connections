@@ -286,16 +286,6 @@ const NotificationsPanel = () => {
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          <div className="p-3 border-t border-gray-200">
-            <button
-              onClick={() => { navigate('/requests?tab=friends'); setIsOpen(false); }}
-              className="w-full text-center text-sm text-orange-600 hover:text-orange-700 font-medium"
-            >
-              Ver todas las solicitudes →
-            </button>
-          </div>
         </div>
       )}
     </div>

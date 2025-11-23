@@ -8,7 +8,7 @@ import './App.css';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import UserProfilePage from './pages/UserProfilePage';
-import RequestsPage from './pages/RequestsPage';
+
 import CommunityPage from './pages/CommunityPage';
 
 function App() {
@@ -23,7 +23,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage/>} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/users/:userId" element={<UserProfilePage />} />
-          <Route path="/requests" element={<RequestsPage />} />
+          
           <Route path="/communities/:communityId" element={<CommunityPage />} />
         </Routes>
       

@@ -2,34 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import NotificationsPanel from './NotificationsPanel';
-import { requests_api } from '../services/requests.api';
 import logoGato from '../assets/logo-gato.png';
 
 const Header = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [requestsCount, setRequestsCount] = useState(0);
-
-  const token = localStorage.getItem('auth_token');
-
-  // Obtener contador de solicitudes pendientes
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchCount = async () => {
-      try {
-        const data = await requests_api.getFriendRequests(token);
-        setRequestsCount(Array.isArray(data) ? data.length : 0);
-      } catch (error) {
-        console.error('Error obteniendo solicitudes:', error);
-      }
-    };
-
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000); // Cada 30 segundos
-    return () => clearInterval(interval);
-  }, [token]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,20 +68,6 @@ const Header = () => {
             title="Mi perfil"
           >
             👤
-          </button>
-          
-          {/* Solicitudes con badge */}
-          <button
-            onClick={() => navigate('/requests?tab=friends')}
-            className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition relative"
-            title="Solicitudes de amistad"
-          >
-            👋
-            {requestsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                {requestsCount > 9 ? '9+' : requestsCount}
-              </span>
-            )}
           </button>
           
           <NotificationsPanel />
