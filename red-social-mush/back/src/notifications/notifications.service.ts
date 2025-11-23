@@ -258,7 +258,8 @@ export class NotificationsService {
     return all;
   }
 
-  async deleteNotificationByRelatedId(relatedId: string) {
+  // ✅ Eliminar notificación por relatedID (cuando se procesa una solicitud)
+async deleteNotificationByRelatedId(relatedId: string) {
   console.log('🗑️ Eliminando notificación con relatedID:', relatedId);
   
   const result = await this.notificationModel.deleteMany({

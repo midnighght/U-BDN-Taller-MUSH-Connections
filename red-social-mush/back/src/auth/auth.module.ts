@@ -7,19 +7,21 @@ import { JwtModule } from '@nestjs/jwt'; // 👈 JWT Module
 import { JWT_SECRET } from 'src/configs/jwt-secret';
 import { CommunitiesModule } from 'src/communities/communities.module';
 import { EmailModule } from 'src/email/email.module';
+import { Neo4jModule } from 'src/neo4j/neo4j.module';
 
 @Module({
-    providers: [AuthService],
-    controllers: [AuthController],
-    imports: [
-        UsersModule,
-        JwtModule.register({
-            global: true, 
-            secret: JWT_SECRET, 
-            signOptions: { expiresIn: '1d' }, 
-        }),
-        CommunitiesModule,
-        EmailModule
-    ],
+  providers: [AuthService],
+  controllers: [AuthController],
+  imports: [
+    UsersModule,
+    JwtModule.register({
+      global: true,
+      secret: JWT_SECRET,
+      signOptions: { expiresIn: '1d' },
+    }),
+    CommunitiesModule,
+    EmailModule,
+    Neo4jModule,
+  ],
 })
 export class AuthModule {}

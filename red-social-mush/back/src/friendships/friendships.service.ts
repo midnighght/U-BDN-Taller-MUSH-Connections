@@ -2,12 +2,19 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Friendship, FriendshipDocument, FriendshipStatus } from './schemas/friendship.schema';
+import {
+  Friendship,
+  FriendshipDocument,
+  FriendshipStatus,
+} from './schemas/friendship.schema';
+import { Neo4jService } from 'src/neo4j/neo4j.service';
 
 @Injectable()
 export class FriendshipsService {
   constructor(
-    @InjectModel(Friendship.name) private friendshipModel: Model<FriendshipDocument>,
+    @InjectModel(Friendship.name)
+    private friendshipModel: Model<FriendshipDocument>,
+    private neo4jService: Neo4jService, // ✅ Inyectar Neo4jService
   ) {}
 
   // ✅ Eliminar amigo
@@ -28,6 +35,14 @@ export class FriendshipsService {
     }
 
     await this.friendshipModel.findByIdAndDelete(friendship._id);
+
+    // ✅ Sincronizar con Neo4j
+    try {
+      await this.neo4jService.removeFriendship(userId, friendId);
+    } catch (error) {
+      console.error('⚠️ Error sincronizando eliminación con Neo4j:', error);
+      // No lanzar error - MongoDB es la fuente de verdad
+    }
 
     return { success: true, message: 'Amistad eliminada' };
   }
@@ -110,8 +125,8 @@ export class FriendshipsService {
     // ✅ Filtrar por búsqueda si existe
     if (search) {
       const searchLower = search.toLowerCase();
-      friends = friends.filter(friend =>
-        friend.username.toLowerCase().includes(searchLower)
+      friends = friends.filter((friend) =>
+        friend.username.toLowerCase().includes(searchLower),
       );
     }
 

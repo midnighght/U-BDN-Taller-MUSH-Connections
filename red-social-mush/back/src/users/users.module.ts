@@ -10,18 +10,22 @@ import { Post, PostSchema } from 'src/posts/schemas/posts.schema';
 import { FriendshipsModule } from 'src/friendships/friendships.module';
 import { CommunitiesModule } from 'src/communities/communities.module';
 import { RequestsModule } from 'src/requests/requests.module';
+import { Neo4jModule } from 'src/neo4j/neo4j.module';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema},
-        {name: Post.name, schema: PostSchema}
-       
-    ]), UploadModule, CloudinaryModule, FriendshipsModule, 
+      { name: User.name, schema: UserSchema },
+      { name: Post.name, schema: PostSchema },
+    ]),
+    UploadModule,
+    CloudinaryModule,
+    FriendshipsModule,
     RequestsModule,
-    forwardRef(() => CommunitiesModule)
+    Neo4jModule,
+    forwardRef(() => CommunitiesModule),
   ],
-  providers: [UsersService,UploadService],
+  providers: [UsersService, UploadService],
   exports: [UsersService, MongooseModule],
-  controllers: [UsersController] 
+  controllers: [UsersController],
 })
 export class UsersModule {}

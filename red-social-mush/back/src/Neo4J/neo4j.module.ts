@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import neo4j from 'neo4j-driver';
+import { Neo4jService } from './neo4j.service';
 
 @Module({
   providers: [
@@ -19,7 +20,8 @@ import neo4j from 'neo4j-driver';
         );
       },
     },
+    Neo4jService,
   ],
-  exports: ['NEO4J_DRIVER'],
+  exports: ['NEO4J_DRIVER', Neo4jService],
 })
 export class Neo4jModule {}

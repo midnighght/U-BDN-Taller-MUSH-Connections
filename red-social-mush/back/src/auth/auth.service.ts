@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { loginDTO, loginResponseDTO, registerDTO, signInDTO } from './dto/auth.dto';
 import { EmailService } from 'src/email/email.service';
+import { Neo4jService } from 'src/neo4j/neo4j.service'; // ✅ Importar Neo4jService
 
 type SignInData = { userId: string; username: string; email: string };
 
@@ -17,7 +18,8 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    private emailService: EmailService, // ✅ INYECTAR EMAIL SERVICE
+    private emailService: EmailService,
+    private neo4jService: Neo4jService, // ✅ Inyectar Neo4jService
   ) {}
 
   async authenticate(@Body() loginDTO: loginDTO): Promise<loginResponseDTO> {
@@ -98,9 +100,9 @@ export class AuthService {
     // ✅ GENERAR TOKEN DE VERIFICACIÓN
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationTokenExpires = new Date();
-    verificationTokenExpires.setHours(verificationTokenExpires.getHours() + 24); // Expira en 24 horas
+    verificationTokenExpires.setHours(verificationTokenExpires.getHours() + 24);
 
-    // Crear usuario
+    // Crear usuario en MongoDB
     const user = new this.userModel({
       username: registerDTO.username,
       email: registerDTO.email,
@@ -110,12 +112,26 @@ export class AuthService {
       birthDate: new Date(registerDTO.birthDate),
       location: registerDTO.location,
       isPrivate: registerDTO.isPrivate || false,
-      isVerified: false, // ✅ Inicialmente no verificado
+      isVerified: false,
       verificationToken,
       verificationTokenExpires,
     });
 
     await user.save();
+
+    // ✅ CREAR NODO EN NEO4J
+    // ✅ CREAR NODO EN NEO4J
+try {
+  await this.neo4jService.createOrUpdateUser(
+    (user._id as any).toString(), // ✅ Cast a any
+    user.username,
+    user.userPhoto || ''
+  );
+  console.log('✅ Usuario creado en Neo4j:', user._id);
+} catch (error) {
+  console.error('⚠️ Error creando usuario en Neo4j:', error);
+  // No fallar el registro si Neo4j falla
+}
 
     // ✅ ENVIAR EMAIL DE VERIFICACIÓN
     try {
@@ -126,7 +142,6 @@ export class AuthService {
       );
     } catch (error) {
       console.error('Error al enviar email de verificación:', error);
-      // No fallar el registro si el email no se envía
     }
 
     return {
@@ -137,41 +152,41 @@ export class AuthService {
 
   // ✅ NUEVO: Verificar email
   async verifyEmail(token: string): Promise<{ message: string }> {
-  console.log('🔍 Buscando usuario con token:', token); // ✅ LOG
+    console.log('🔍 Buscando usuario con token:', token);
 
-  const user = await this.userModel.findOne({
-    verificationToken: token,
-    verificationTokenExpires: { $gt: new Date() },
-  });
+    const user = await this.userModel.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: new Date() },
+    });
 
-  if (!user) {
-    console.log('❌ Token inválido o expirado'); // ✅ LOG
-    throw new BadRequestException('Token de verificación inválido o expirado');
-  }
-
-  console.log('👤 Usuario encontrado:', user.email); // ✅ LOG
-
-  // Marcar como verificado y eliminar tokens
-  await this.userModel.findByIdAndUpdate(user._id, {
-    $set: { isVerified: true },
-    $unset: { 
-      verificationToken: 1, 
-      verificationTokenExpires: 1 
+    if (!user) {
+      console.log('❌ Token inválido o expirado');
+      throw new BadRequestException('Token de verificación inválido o expirado');
     }
-  });
 
-  console.log('✅ Usuario marcado como verificado'); // ✅ LOG
+    console.log('👤 Usuario encontrado:', user.email);
 
-  // Enviar email de bienvenida
-  try {
-    await this.emailService.sendWelcomeEmail(user.email, user.username);
-    console.log('📧 Email de bienvenida enviado'); // ✅ LOG
-  } catch (error) {
-    console.error('⚠️ Error al enviar email de bienvenida:', error);
+    // Marcar como verificado y eliminar tokens
+    await this.userModel.findByIdAndUpdate(user._id, {
+      $set: { isVerified: true },
+      $unset: { 
+        verificationToken: 1, 
+        verificationTokenExpires: 1 
+      }
+    });
+
+    console.log('✅ Usuario marcado como verificado');
+
+    // Enviar email de bienvenida
+    try {
+      await this.emailService.sendWelcomeEmail(user.email, user.username);
+      console.log('📧 Email de bienvenida enviado');
+    } catch (error) {
+      console.error('⚠️ Error al enviar email de bienvenida:', error);
+    }
+
+    return { message: 'Email verificado exitosamente. Ya puedes iniciar sesión.' };
   }
-
-  return { message: 'Email verificado exitosamente. Ya puedes iniciar sesión.' };
-}
 
   async validateToken(token: string) {
     try {

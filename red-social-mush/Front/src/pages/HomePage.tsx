@@ -9,6 +9,7 @@ import FeedPost from '../components/FeedPost';
 import { friendships_api } from '../services/friendships.api';
 import { feed_api } from '../services/feed.api';
 import { communities_api } from '../services/communities.api';
+import { suggestions_api } from '../services/suggestions.api';
 import type { FeedPost as FeedPostType } from '../services/feed.api';
 
 interface Friend {
@@ -27,6 +28,14 @@ interface Community {
   adminsCount: number;
 }
 
+interface Suggestion {
+  _id: string;
+  username: string;
+  userPhoto?: string;
+  bio?: string;
+  mutualFriends: number;
+}
+
 const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -34,6 +43,10 @@ const HomePage = () => {
   const [showFriendsModal, setShowFriendsModal] = useState(false);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
+  
+  // ✅ Estado para sugerencias
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   
   // ✅ Estado para comunidades
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -66,6 +79,7 @@ const HomePage = () => {
     fetchFriends();
     fetchFeed();
     fetchCommunities();
+    fetchSuggestions();
   }, []);
 
   const fetchFriends = async () => {
@@ -82,6 +96,21 @@ const HomePage = () => {
     }
   };
 
+  // ✅ Cargar sugerencias
+  const fetchSuggestions = async () => {
+    if (!token) return;
+    
+    try {
+      setLoadingSuggestions(true);
+      const data = await suggestions_api.getFriendSuggestions(token, 5);
+      setSuggestions(data);
+    } catch (error) {
+      console.error('Error al cargar sugerencias:', error);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
   // ✅ Cargar comunidades
   const fetchCommunities = async () => {
     if (!token) return;
@@ -89,7 +118,7 @@ const HomePage = () => {
     try {
       setLoadingCommunities(true);
       const data = await communities_api.getMyCommunitiesDetailed(token);
-      setCommunities(data.slice(0, 5)); // Mostrar solo las primeras 5
+      setCommunities(data.slice(0, 5));
     } catch (error) {
       console.error('Error al cargar comunidades:', error);
     } finally {
@@ -190,7 +219,6 @@ const HomePage = () => {
                   onClick={() => navigate(`/communities/${community._id}`)}
                   className="flex items-center p-2 rounded-xl hover:bg-white hover:shadow-md transition cursor-pointer group"
                 >
-                  {/* Imagen */}
                   <div className="w-10 h-10 bg-gradient-to-br from-orange-300 to-yellow-400 rounded-full overflow-hidden flex-shrink-0">
                     {community.mediaURL ? (
                       <img
@@ -205,7 +233,6 @@ const HomePage = () => {
                     )}
                   </div>
                   
-                  {/* Info */}
                   <div className="ml-3 flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <p className="font-semibold text-gray-800 text-sm truncate">
@@ -218,14 +245,12 @@ const HomePage = () => {
                     </p>
                   </div>
 
-                  {/* Flecha */}
                   <span className="text-gray-300 group-hover:text-orange-400 transition">
                     →
                   </span>
                 </div>
               ))}
 
-              {/* Ver todas */}
               {communities.length >= 5 && (
                 <button
                   onClick={() => setOpenModal(true)}
@@ -286,8 +311,9 @@ const HomePage = () => {
           )}
         </section>
 
-        {/* COLUMNA DERECHA: AMIGOS */}
+        {/* COLUMNA DERECHA: AMIGOS Y SUGERENCIAS */}
         <aside className="w-1/5">
+          {/* Sección de Amigos */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-800">Amigos</h2>
             <button
@@ -308,7 +334,7 @@ const HomePage = () => {
               <p className="text-sm">Aún no tienes amigos</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 mb-8">
               {friends.map((friend) => (
                 <div
                   key={friend._id}
@@ -341,13 +367,56 @@ const HomePage = () => {
             </div>
           )}
 
-          {/* Sugerencias (placeholder) */}
+          {/* ✅ Sección de Sugerencias */}
           <h2 className="text-xl font-bold mt-8 mb-4 text-gray-800">
             Sugerencias
           </h2>
-          <div className="text-center py-4 text-gray-400">
-            <p className="text-sm">Próximamente</p>
-          </div>
+
+          {loadingSuggestions ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+            </div>
+          ) : suggestions.length === 0 ? (
+            <div className="text-center py-6 text-gray-400">
+              <span className="text-3xl mb-2 block">💡</span>
+              <p className="text-sm">No hay sugerencias disponibles</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {suggestions.map((suggestion) => (
+                <div
+                  key={suggestion._id}
+                  onClick={() => navigate(`/users/${suggestion._id}`)}
+                  className="flex items-center p-3 rounded-xl bg-purple-50 hover:bg-purple-100 transition cursor-pointer group border border-purple-100"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-300 to-pink-400 rounded-full overflow-hidden flex-shrink-0">
+                    {suggestion.userPhoto ? (
+                      <img
+                        src={suggestion.userPhoto}
+                        alt={suggestion.username}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white font-bold">
+                        {suggestion.username.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="ml-3 flex-1 min-w-0">
+                    <p className="font-semibold text-gray-800 text-sm truncate">
+                      {suggestion.username}
+                    </p>
+                    <p className="text-[11px] text-purple-600">
+                      {suggestion.mutualFriends} {suggestion.mutualFriends === 1 ? 'amigo' : 'amigos'} en común
+                    </p>
+                  </div>
+                  <span className="text-purple-300 group-hover:text-purple-500 transition">
+                    →
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </aside>
       </main>
 
@@ -355,7 +424,7 @@ const HomePage = () => {
         <CommunityManager 
           onClose={() => {
             setOpenModal(false);
-            fetchCommunities(); // ✅ Recargar comunidades al cerrar
+            fetchCommunities();
           }} 
         />
       )}
@@ -364,4 +433,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default HomePage;  

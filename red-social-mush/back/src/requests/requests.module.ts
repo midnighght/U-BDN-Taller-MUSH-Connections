@@ -4,8 +4,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { RequestsController } from './requests.controller';
 import { RequestsService } from './requests.service';
 import { Request, RequestSchema } from './schemas/requests.schema';
-import { Friendship, FriendshipSchema } from 'src/friendships/schemas/friendship.schema';
+import {
+  Friendship,
+  FriendshipSchema,
+} from 'src/friendships/schemas/friendship.schema';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { Neo4jModule } from 'src/neo4j/neo4j.module';
 
 @Module({
   imports: [
@@ -14,6 +18,7 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
       { name: Friendship.name, schema: FriendshipSchema }, // ✅ AGREGAR
     ]),
     NotificationsModule,
+    Neo4jModule,
   ],
   controllers: [RequestsController],
   providers: [RequestsService],

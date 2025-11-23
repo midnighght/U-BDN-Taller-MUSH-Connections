@@ -20,6 +20,7 @@ import { RequestsModule } from './requests/requests.module';
 import { RequestsService } from './requests/requests.service';
 import { FeedService } from './feed/feed.service';
 import { FeedModule } from './feed/feed.module';
+import { SuggestionsModule } from './suggestions/suggestions.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { FeedModule } from './feed/feed.module';
     BlocksModule,
     RequestsModule,
     FeedModule,
+    SuggestionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, BlocksService, FeedService],
