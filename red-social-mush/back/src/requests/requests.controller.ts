@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, Param, Body, Request, UseGuards, Query } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, Body, Request, UseGuards } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { AuthGuard } from 'src/auth/guards/auth.guards';
 
@@ -7,11 +7,30 @@ import { AuthGuard } from 'src/auth/guards/auth.guards';
 export class RequestsController {
   constructor(private readonly requestsService: RequestsService) {}
 
-  // ✅ Obtener solicitudes de amistad pendientes
+  // ⚠️ IMPORTANTE: Las rutas estáticas DEBEN ir ANTES de las rutas con :params
+
+  // ✅ Obtener solicitudes de amistad pendientes (RECIBIDAS)
   @Get('friends')
   async getFriendRequests(@Request() req) {
     const userId = req.user.userId;
     return await this.requestsService.getUserPendingRequests(userId);
+  }
+
+  // ✅ Obtener solicitudes ENVIADAS - DEBE IR ANTES de rutas con :param
+  @Get('friends/sent')
+  async getSentFriendRequests(@Request() req) {
+    const userId = req.user.userId;
+    return await this.requestsService.getSentRequests(userId);
+  }
+
+  // ✅ Verificar estado de solicitud con otro usuario
+  @Get('status/:otherUserId')
+  async getRequestStatus(
+    @Param('otherUserId') otherUserId: string,
+    @Request() req
+  ) {
+    const userId = req.user.userId;
+    return await this.requestsService.getFriendRequestStatus(userId, otherUserId);
   }
 
   // ✅ Obtener solicitudes de comunidad (para admins)
@@ -49,7 +68,7 @@ export class RequestsController {
     );
   }
 
-  // ✅ Aceptar solicitud (genérico)
+  // ✅ Aceptar solicitud
   @Post(':requestId/accept')
   async acceptRequest(
     @Param('requestId') requestId: string,
@@ -59,7 +78,7 @@ export class RequestsController {
     return await this.requestsService.acceptRequest(requestId, approverId);
   }
 
-  // ✅ Rechazar solicitud (genérico)
+  // ✅ Rechazar solicitud
   @Delete(':requestId/reject')
   async rejectRequest(
     @Param('requestId') requestId: string,
@@ -69,13 +88,13 @@ export class RequestsController {
     return await this.requestsService.rejectRequest(requestId, approverId);
   }
 
-  // ✅ Verificar estado de solicitud con otro usuario
-  @Get('status/:otherUserId')
-  async getRequestStatus(
-    @Param('otherUserId') otherUserId: string,
+  // ✅ Cancelar solicitud enviada
+  @Delete(':requestId/cancel')
+  async cancelRequest(
+    @Param('requestId') requestId: string,
     @Request() req
   ) {
-    const userId = req.user.userId;
-    return await this.requestsService.getFriendRequestStatus(userId, otherUserId);
+    const requesterId = req.user.userId;
+    return await this.requestsService.cancelRequest(requestId, requesterId);
   }
 }

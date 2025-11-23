@@ -35,9 +35,18 @@ interface PostDetails {
 interface PostModalProps {
   postId: string;
   onClose: () => void;
+  onPostDeleted?: () => void;
+  communityId?: string;
+  isAdmin?: boolean;
 }
 
-const PostModal: React.FC<PostModalProps> = ({ postId, onClose }) => {
+const PostModal: React.FC<PostModalProps> = ({ 
+  postId, 
+  onClose, 
+  onPostDeleted,
+  communityId,
+  isAdmin = false 
+}) => {
   const { user } = useAuth();
   const [post, setPost] = useState<PostDetails | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -162,6 +171,41 @@ const PostModal: React.FC<PostModalProps> = ({ postId, onClose }) => {
     }
   };
 
+  // ✅ NUEVA función para eliminar post
+  const handleDeletePost = async () => {
+    if (!token || !post) return;
+    
+    const confirmDelete = window.confirm(
+      '¿Estás seguro de que quieres eliminar este post? Esta acción no se puede deshacer.'
+    );
+    
+    if (!confirmDelete) return;
+
+    try {
+      const postAuthor = getAuthorData(post.authorID);
+      const isOwner = postAuthor._id === user?.id;
+
+      // Si es admin de comunidad y no es el autor
+      if (isAdmin && !isOwner && communityId) {
+        await posts_api.deletePostAsAdmin(communityId, postId, token);
+      } else {
+        // Usuario eliminando su propio post
+        await posts_api.deletePost(postId, token);
+      }
+
+      alert('Post eliminado exitosamente');
+      onClose();
+      
+      // Callback para actualizar la lista de posts
+      if (onPostDeleted) {
+        onPostDeleted();
+      }
+    } catch (error) {
+      console.error('Error al eliminar post:', error);
+      alert('No se pudo eliminar el post. Intenta de nuevo.');
+    }
+  };
+
   const toggleReplies = (commentId: string) => {
     setExpandedReplies(prev => {
       const newSet = new Set(prev);
@@ -258,7 +302,7 @@ const PostModal: React.FC<PostModalProps> = ({ postId, onClose }) => {
               )}
             </div>
 
-            {/* Ver respuestas - ahora funciona en cualquier nivel */}
+            {/* Ver respuestas */}
             {hasReplies && (
               <button
                 onClick={() => toggleReplies(comment._id)}
@@ -274,7 +318,7 @@ const PostModal: React.FC<PostModalProps> = ({ postId, onClose }) => {
           </div>
         </div>
 
-        {/* Respuestas anidadas - recursivas en cualquier nivel */}
+        {/* Respuestas anidadas */}
         {hasReplies && showReplies && (
           <div className="mt-3">
             {comment.replies.map(reply => renderComment(reply, depth + 1))}
@@ -295,6 +339,8 @@ const PostModal: React.FC<PostModalProps> = ({ postId, onClose }) => {
   if (!post) return null;
 
   const postAuthor = getAuthorData(post.authorID);
+  const isOwner = postAuthor._id === user?.id;
+  const canDelete = isOwner || isAdmin; // ✅ Puede eliminar si es dueño o admin
 
   return (
     <div 
@@ -331,22 +377,37 @@ const PostModal: React.FC<PostModalProps> = ({ postId, onClose }) => {
 
         {/* Panel derecho */}
         <div className="w-1/2 flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 overflow-hidden flex-shrink-0">
-              {postAuthor.userPhoto ? (
-                <img 
-                  src={postAuthor.userPhoto} 
-                  alt={postAuthor.username}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                  {postAuthor.username?.charAt(0).toUpperCase() || '?'}
-                </div>
-              )}
+          {/* Header con botón eliminar */}
+          <div className="flex items-center justify-between gap-3 p-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 overflow-hidden flex-shrink-0">
+                {postAuthor.userPhoto ? (
+                  <img 
+                    src={postAuthor.userPhoto} 
+                    alt={postAuthor.username}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white font-bold">
+                    {postAuthor.username?.charAt(0).toUpperCase() || '?'}
+                  </div>
+                )}
+              </div>
+              <span className="font-semibold text-gray-900">{postAuthor.username}</span>
             </div>
-            <span className="font-semibold text-gray-900">{postAuthor.username}</span>
+
+            {/* ✅ Botón eliminar */}
+            {canDelete && (
+              <button
+                onClick={handleDeletePost}
+                className="text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50"
+                title={isOwner ? "Eliminar tu post" : "Eliminar post (Admin)"}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* Comentarios con scroll */}

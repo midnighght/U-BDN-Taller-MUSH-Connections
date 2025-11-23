@@ -18,6 +18,8 @@ import { BlocksService } from './blocks/blocks.service';
 import { BlocksModule } from './blocks/blocks.module';
 import { RequestsModule } from './requests/requests.module';
 import { RequestsService } from './requests/requests.service';
+import { FeedService } from './feed/feed.service';
+import { FeedModule } from './feed/feed.module';
 
 @Module({
   imports: [
@@ -44,8 +46,9 @@ import { RequestsService } from './requests/requests.service';
     NotificationsModule,
     BlocksModule,
     RequestsModule,
+    FeedModule,
   ],
   controllers: [AppController],
-  providers: [AppService, BlocksService],
+  providers: [AppService, BlocksService, FeedService],
 })
 export class AppModule {}

@@ -16,27 +16,27 @@ export class SearchService {
   async globalSearch(query: string, viewerId: string) {
     const searchRegex = new RegExp(query, 'i');
 
-    // ✅ CAMBIO: Buscar TODOS los usuarios, incluidos los privados
+    // Buscar TODOS los usuarios, incluidos los privados
     const users = await this.userModel
       .find({
         username: searchRegex,
         _id: { $ne: viewerId }, // No incluir al usuario actual
       })
-      .select('username userPhoto isPrivate') // ✅ Incluir isPrivate
+      .select('username userPhoto isPrivate')
       .limit(10)
       .lean()
       .exec();
 
-    // Buscar comunidades públicas
+    // ✅ CAMBIO: Buscar TODAS las comunidades (públicas Y privadas)
     const communities = await this.communityModel
       .find({
         $or: [
           { name: searchRegex },
           { hashtags: { $in: [searchRegex] } }
-        ],
-        isPrivate: false // Solo comunidades públicas
+        ]
+        // ❌ REMOVIDO: isPrivate: false
       })
-      .select('name description mediaURL hashtags memberID')
+      .select('name description mediaURL hashtags memberID isPrivate') // ✅ Incluir isPrivate
       .limit(10)
       .lean()
       .exec();
@@ -55,9 +55,8 @@ export class SearchService {
       .lean()
       .exec();
 
-    // ✅ Filtrar posts de usuarios privados (esto lo manejará el frontend también)
+    // Filtrar posts de usuarios privados
     const filteredPosts = posts.filter((post: any) => {
-      // Mostrar si el autor no es privado, o si es el mismo viewer
       return !post.authorID?.isPrivate || post.authorID?._id?.toString() === viewerId;
     });
 
@@ -66,7 +65,7 @@ export class SearchService {
         _id: user._id,
         username: user.username,
         userPhoto: user.userPhoto,
-        isPrivate: user.isPrivate, // ✅ Incluir indicador de privacidad
+        isPrivate: user.isPrivate,
         type: 'user'
       })),
       communities: communities.map(community => ({
@@ -76,6 +75,7 @@ export class SearchService {
         mediaURL: community.mediaURL,
         hashtags: community.hashtags,
         membersCount: community.memberID?.length || 0,
+        isPrivate: community.isPrivate, // ✅ Incluir indicador de privacidad
         type: 'community'
       })),
       posts: filteredPosts.map((post: any) => ({

@@ -6,6 +6,7 @@ import { UploadService } from 'src/upload/upload.service';
 import { Post, PostDocument } from 'src/posts/schemas/posts.schema';
 import { FriendshipsService } from 'src/friendships/friendships.service';
 import { CommunitiesService } from 'src/communities/communities.service';
+import { RequestsService } from 'src/requests/requests.service';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +15,7 @@ export class UsersService {
         @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
         private readonly uploadService: UploadService,
         private friendshipsService: FriendshipsService,
+        private requestsService: RequestsService,
         private communitiesService: CommunitiesService,
     ) {}
         
@@ -40,112 +42,122 @@ export class UsersService {
         await this.userModel.findByIdAndUpdate(userId, { isPrivate });
     }
 
-    // ✅ ACTUALIZADO: Ver perfil con privacidad y relaciones
     async getUserProfile(userId: string, viewerId: string) {
-        console.log('👁️ Viendo perfil:', userId);
-        console.log('   Viewer:', viewerId);
+  console.log('👁️ Viendo perfil:', userId);
+  console.log('   Viewer:', viewerId);
 
-        const user = await this.userModel
-            .findById(userId)
-            .select('-password -email -verificationToken')
-            .lean()
-            .exec();
+  const user = await this.userModel
+    .findById(userId)
+    .select('-password -email -verificationToken')
+    .lean()
+    .exec();
 
-        if (!user) {
-            throw new NotFoundException('Usuario no encontrado');
-        }
+  if (!user) {
+    throw new NotFoundException('Usuario no encontrado');
+  }
 
-        // Verificar si está bloqueado
-        const isBlocked = user.blockedUsers?.some(
-            (id: Types.ObjectId) => id.toString() === viewerId
-        );
+  // Verificar si está bloqueado
+  const isBlocked = user.blockedUsers?.some(
+    (id: Types.ObjectId) => id.toString() === viewerId
+  );
 
-        if (isBlocked) {
-            throw new ForbiddenException('No tienes acceso a este perfil');
-        }
+  if (isBlocked) {
+    throw new ForbiddenException('No tienes acceso a este perfil');
+  }
 
-        // Obtener estado de amistad
-        const friendshipStatus = await this.friendshipsService.getFriendshipStatus(
-            viewerId,
-            userId
-        );
+  // ✅ Obtener estado de amistad (solo amistades ESTABLECIDAS)
+  const friendshipStatus = await this.friendshipsService.getFriendshipStatus(
+    viewerId,
+    userId
+  );
+  
+  // ✅ Obtener estado de solicitud (solo solicitudes PENDIENTES)
+  const requestStatus = await this.requestsService.getFriendRequestStatus(
+    viewerId,
+    userId
+  );
 
-        const areFriends = friendshipStatus.status === 'friends';
+  console.log('🔍 friendshipStatus:', friendshipStatus);
+  console.log('🔍 requestStatus:', requestStatus);
 
-        // Si el perfil es privado y no son amigos, limitar info
-        if (user.isPrivate && !areFriends && viewerId !== userId) {
-            console.log('🔒 Perfil privado - acceso limitado');
+  const areFriends = friendshipStatus.status === 'friends';
 
-            return {
-                profile: {
-                    _id: user._id,
-                    username: user.username,
-                    userPhoto: user.userPhoto,
-                    bio: user.description || 'Sin descripción',
-                    isPrivate: true,
-                    createdAt: user.createdAt,
-                    stats: {
-                        friends: 0,
-                        posts: 0,
-                        communities: 0,
-                    },
-                    relationship: {
-                        friendship: friendshipStatus,
-                        isBlockedByMe: false,
-                    },
-                },
-                posts: [], // No mostrar posts
-            };
-        }
+  // Si el perfil es privado y no son amigos, limitar info
+  if (user.isPrivate && !areFriends && viewerId !== userId) {
+    console.log('🔒 Perfil privado - acceso limitado');
 
-        // Perfil público o son amigos - mostrar todo
-        console.log('✅ Perfil accesible - mostrando información completa');
+    return {
+      profile: {
+        _id: user._id,
+        username: user.username,
+        userPhoto: user.userPhoto,
+        bio: user.description || 'Sin descripción',
+        isPrivate: true,
+        createdAt: user.createdAt,
+        stats: {
+          friends: 0,
+          posts: 0,
+          communities: 0,
+        },
+        relationship: {
+          friendship: friendshipStatus, // { status: 'none', canSendRequest: true/false }
+          request: requestStatus,       // { status: 'pending'/'none', canSendRequest: true/false, isSender: true/false, requestId: '...' }
+          isBlockedByMe: false,
+        },
+      },
+      posts: [],
+    };
+  }
 
-        const posts = await this.postModel
-            .find({ authorID: userId })
-            .select('mediaURL textBody hashtags createdAt')
-            .sort({ createdAt: -1 })
-            .limit(20)
-            .lean()
-            .exec();
+  // Perfil público o son amigos - mostrar todo
+  console.log('✅ Perfil accesible - mostrando información completa');
 
-        const postsCount = await this.postModel.countDocuments({ authorID: userId });
-        const friendsCount = await this.countFriends(userId);
-        const communitiesCount = await this.communitiesService.getUserCommunitiesCount(userId);
+  const posts = await this.postModel
+    .find({ authorID: userId })
+    .select('mediaURL textBody hashtags createdAt')
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .lean()
+    .exec();
 
-        // Verificar si el viewer ha bloqueado al usuario
-        const viewer = await this.userModel.findById(viewerId).select('blockedUsers').lean();
-        const isBlockedByMe = viewer?.blockedUsers?.some(
-            (id: Types.ObjectId) => id.toString() === userId
-        ) || false;
+  const postsCount = await this.postModel.countDocuments({ authorID: userId });
+  const friendsCount = await this.countFriends(userId);
+  const communitiesCount = await this.communitiesService.getUserCommunitiesCount(userId);
 
-        return {
-            profile: {
-                _id: user._id,
-                username: user.username,
-                userPhoto: user.userPhoto,
-                bio: user.description || '',
-                isPrivate: user.isPrivate,
-                createdAt: user.createdAt,
-                stats: {
-                    friends: friendsCount,
-                    posts: postsCount,
-                    communities: communitiesCount,
-                },
-                relationship: {
-                    friendship: friendshipStatus,
-                    isBlockedByMe,
-                },
-            },
-            posts: posts.map(post => ({
-                _id: post._id,
-                mediaURL: post.mediaURL,
-                textBody: post.textBody,
-                hashtags: post.hashtags,
-                createdAt: post.createdAt,
-            })),
-        };
-    }
+  // Verificar si el viewer ha bloqueado al usuario
+  const viewer = await this.userModel.findById(viewerId).select('blockedUsers').lean();
+  const isBlockedByMe = viewer?.blockedUsers?.some(
+    (id: Types.ObjectId) => id.toString() === userId
+  ) || false;
+
+  return {
+    profile: {
+      _id: user._id,
+      username: user.username,
+      userPhoto: user.userPhoto,
+      bio: user.description || '',
+      isPrivate: user.isPrivate,
+      createdAt: user.createdAt,
+      stats: {
+        friends: friendsCount,
+        posts: postsCount,
+        communities: communitiesCount,
+      },
+      relationship: {
+        friendship: friendshipStatus, // { status: 'friends'/'none', canSendRequest: true/false }
+        request: requestStatus,       // { status: 'pending'/'none', canSendRequest: true/false, isSender: true/false, requestId: '...' }
+        isBlockedByMe,
+      },
+    },
+    posts: posts.map(post => ({
+      _id: post._id,
+      mediaURL: post.mediaURL,
+      textBody: post.textBody,
+      hashtags: post.hashtags,
+      createdAt: post.createdAt,
+    })),
+  };
+}
 
     private async countFriends(userId: string): Promise<number> {
         try {

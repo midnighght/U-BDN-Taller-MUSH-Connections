@@ -1,7 +1,9 @@
+// requests/requests.service.ts
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Request, RequestDocument, RequestType, RequestStatus } from './schemas/requests.schema';
+import { Friendship, FriendshipDocument, FriendshipStatus } from 'src/friendships/schemas/friendship.schema';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/notifications/schemas/notification.schema';
 
@@ -9,8 +11,162 @@ import { NotificationType } from 'src/notifications/schemas/notification.schema'
 export class RequestsService {
   constructor(
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
+    @InjectModel(Friendship.name) private friendshipModel: Model<FriendshipDocument>,
     private notificationsService: NotificationsService,
   ) {}
+
+  // ✅ Crear solicitud de amistad
+  async createFriendRequest(requesterId: string, recipientId: string) {
+    console.log('📤 Creando solicitud de amistad');
+    console.log('   De:', requesterId);
+    console.log('   Para:', recipientId);
+
+    if (requesterId === recipientId) {
+      throw new BadRequestException('No puedes enviarte una solicitud a ti mismo');
+    }
+
+    const requesterObjectId = new Types.ObjectId(requesterId);
+    const recipientObjectId = new Types.ObjectId(recipientId);
+
+    // ✅ Verificar si ya son amigos (en Friendships)
+    const existingFriendship = await this.friendshipModel.findOne({
+      $or: [
+        { requesterID: requesterObjectId, recipientID: recipientObjectId, status: FriendshipStatus.ACCEPTED },
+        { requesterID: recipientObjectId, recipientID: requesterObjectId, status: FriendshipStatus.ACCEPTED },
+      ],
+    });
+
+    if (existingFriendship) {
+      throw new BadRequestException('Ya son amigos');
+    }
+
+    // ✅ Verificar si ya existe una solicitud pendiente (en cualquier dirección)
+    const existingRequest = await this.requestModel.findOne({
+      $or: [
+        { requesterID: requesterObjectId, recipientID: recipientObjectId },
+        { requesterID: recipientObjectId, recipientID: requesterObjectId },
+      ],
+      type: RequestType.FRIEND_REQUEST,
+      status: RequestStatus.PENDING,
+    });
+
+    if (existingRequest) {
+      throw new BadRequestException('Ya existe una solicitud pendiente');
+    }
+
+    // ✅ Crear la solicitud
+    const request = new this.requestModel({
+      requesterID: requesterObjectId,
+      recipientID: recipientObjectId,
+      type: RequestType.FRIEND_REQUEST,
+      status: RequestStatus.PENDING,
+    }) as RequestDocument;
+
+    await request.save();
+
+    // ✅ Crear notificación
+    await this.notificationsService.createNotification({
+      recipientID: recipientId,
+      senderID: requesterId,
+      type: NotificationType.FRIEND_REQUEST,
+      message: 'te envió una solicitud de amistad',
+      relatedID: (request._id as Types.ObjectId).toString(),
+    });
+
+    console.log('✅ Solicitud de amistad creada:', request._id);
+    return { success: true, message: 'Solicitud enviada', requestId: request._id };
+  }
+
+  // ✅ Aceptar solicitud
+  async acceptRequest(requestId: string, approverId: string) {
+    console.log('✅ Aceptando solicitud:', requestId);
+
+    const request = await this.requestModel.findById(requestId);
+
+    if (!request) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    if (request.status !== RequestStatus.PENDING) {
+      throw new BadRequestException('Esta solicitud ya fue procesada');
+    }
+
+    // Verificar permisos según el tipo
+    if (request.type === RequestType.FRIEND_REQUEST) {
+      if (request.recipientID?.toString() !== approverId) {
+        throw new BadRequestException('No puedes aceptar esta solicitud');
+      }
+
+      // ✅ Crear Friendship en MongoDB
+      const friendship = new this.friendshipModel({
+        requesterID: request.requesterID,
+        recipientID: request.recipientID,
+        status: FriendshipStatus.ACCEPTED,
+      });
+      await friendship.save();
+      
+      console.log('✅ Friendship creada en MongoDB:', friendship._id);
+
+      // ✅ Crear notificación de aceptación
+      await this.notificationsService.createNotification({
+        recipientID: request.requesterID.toString(),
+        senderID: approverId,
+        type: NotificationType.FRIEND_ACCEPT,
+        message: 'aceptó tu solicitud de amistad',
+      });
+    }
+
+    // Si es de comunidad, validar permisos de admin (implementar después)
+    // ...
+
+    // ✅ Eliminar la solicitud (ya no es necesaria)
+    await this.requestModel.findByIdAndDelete(requestId);
+
+    // ✅ Eliminar la notificación asociada
+    try {
+      await this.notificationsService.deleteNotificationByRelatedId(requestId);
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+    }
+
+    console.log('✅ Solicitud aceptada y procesada');
+    return { success: true, message: 'Solicitud aceptada' };
+  }
+
+  // ✅ Rechazar solicitud
+  async rejectRequest(requestId: string, approverId: string) {
+    console.log('❌ Rechazando solicitud:', requestId);
+
+    const request = await this.requestModel.findById(requestId);
+
+    if (!request) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    if (request.status !== RequestStatus.PENDING) {
+      throw new BadRequestException('Esta solicitud ya fue procesada');
+    }
+
+    // Verificar permisos según el tipo
+    if (request.type === RequestType.FRIEND_REQUEST) {
+      if (request.recipientID?.toString() !== approverId) {
+        throw new BadRequestException('No puedes rechazar esta solicitud');
+      }
+    }
+
+    // Eliminar la solicitud
+    await this.requestModel.findByIdAndDelete(requestId);
+
+    // ✅ Eliminar la notificación asociada
+    try {
+      await this.notificationsService.deleteNotificationByRelatedId(requestId);
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+    }
+
+    console.log('✅ Solicitud rechazada y eliminada');
+    return { success: true, message: 'Solicitud rechazada' };
+  }
 
   // ✅ Obtener solicitudes pendientes de un usuario (amistades)
   async getUserPendingRequests(userId: string) {
@@ -39,6 +195,64 @@ export class RequestsService {
       },
       createdAt: req.createdAt,
     }));
+  }
+
+  // ✅ CORREGIDO: Verificar estado de solicitud entre dos usuarios
+  async getFriendRequestStatus(userId: string, otherUserId: string) {
+    console.log('🔍 Verificando solicitud entre:', userId, 'y', otherUserId);
+    
+    // ✅ Convertir a ObjectId
+    const userObjectId = new Types.ObjectId(userId);
+    const otherUserObjectId = new Types.ObjectId(otherUserId);
+    
+    const request = await this.requestModel.findOne({
+      $or: [
+        { requesterID: userObjectId, recipientID: otherUserObjectId },
+        { requesterID: otherUserObjectId, recipientID: userObjectId },
+      ],
+      type: RequestType.FRIEND_REQUEST,
+      status: RequestStatus.PENDING,
+    }).lean().exec(); // ✅ Agregar .lean().exec() para mejor performance
+
+    console.log('🔍 Solicitud encontrada:', request ? 'SÍ' : 'NO');
+
+    if (!request) {
+      // Verificar si ya son amigos
+      const friendship = await this.friendshipModel.findOne({
+        $or: [
+          { requesterID: userObjectId, recipientID: otherUserObjectId, status: FriendshipStatus.ACCEPTED },
+          { requesterID: otherUserObjectId, recipientID: userObjectId, status: FriendshipStatus.ACCEPTED },
+        ],
+      }).lean().exec();
+
+      if (friendship) {
+        console.log('✅ Ya son amigos');
+        return { status: 'friends', canSendRequest: false };
+      }
+
+      console.log('❌ No hay solicitud ni amistad');
+      return { status: 'none', canSendRequest: true };
+    }
+
+    // ✅ Determinar si el usuario actual es quien envió la solicitud
+    const isSender = request.requesterID.toString() === userId;
+    const requestId = request._id.toString();
+    
+    console.log('📋 Estado de solicitud:', {
+      status: 'pending',
+      isSender,
+      requestId,
+      requesterID: request.requesterID.toString(),
+      recipientID: request.recipientID?.toString(),
+      userId
+    });
+
+    return {
+      status: 'pending',
+      canSendRequest: false,
+      isSender,
+      requestId,
+    };
   }
 
   // ✅ Obtener solicitudes de unión a comunidad (para admins)
@@ -70,118 +284,6 @@ export class RequestsService {
       metadata: req.metadata,
       createdAt: req.createdAt,
     }));
-  }
-
-  // ✅ Aceptar solicitud (genérico)
-  async acceptRequest(requestId: string, approverId: string) {
-    console.log('✅ Aceptando solicitud:', requestId);
-
-    const request = await this.requestModel.findById(requestId);
-
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
-
-    if (request.status !== RequestStatus.PENDING) {
-      throw new BadRequestException('Esta solicitud ya fue procesada');
-    }
-
-    // Verificar permisos según el tipo
-    if (request.type === RequestType.FRIEND_REQUEST) {
-      if (request.recipientID?.toString() !== approverId) {
-        throw new BadRequestException('No puedes aceptar esta solicitud');
-      }
-    }
-
-    // Si es de comunidad, validar permisos de admin (implementar después)
-
-    request.status = RequestStatus.ACCEPTED;
-    await request.save();
-
-    // Crear notificación según el tipo
-    if (request.type === RequestType.FRIEND_REQUEST) {
-      await this.notificationsService.createNotification({
-        recipientID: request.requesterID.toString(),
-        senderID: approverId,
-        type: NotificationType.FRIEND_ACCEPT,
-        message: 'aceptó tu solicitud de amistad',
-      });
-    }
-
-    console.log('✅ Solicitud aceptada exitosamente');
-    return { success: true, message: 'Solicitud aceptada', request };
-  }
-
-  // ✅ Rechazar solicitud (genérico)
-  async rejectRequest(requestId: string, approverId: string) {
-    console.log('❌ Rechazando solicitud:', requestId);
-
-    const request = await this.requestModel.findById(requestId);
-
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
-
-    if (request.status !== RequestStatus.PENDING) {
-      throw new BadRequestException('Esta solicitud ya fue procesada');
-    }
-
-    // Verificar permisos según el tipo
-    if (request.type === RequestType.FRIEND_REQUEST) {
-      if (request.recipientID?.toString() !== approverId) {
-        throw new BadRequestException('No puedes rechazar esta solicitud');
-      }
-    }
-
-    // Eliminar la solicitud en lugar de marcarla como rechazada
-    await this.requestModel.findByIdAndDelete(requestId);
-
-    console.log('✅ Solicitud rechazada y eliminada');
-    return { success: true, message: 'Solicitud rechazada' };
-  }
-
-  // ✅ Crear solicitud de amistad
-  async createFriendRequest(requesterId: string, recipientId: string) {
-    console.log('📤 Creando solicitud de amistad');
-    console.log('   De:', requesterId);
-    console.log('   Para:', recipientId);
-
-    if (requesterId === recipientId) {
-      throw new BadRequestException('No puedes enviarte una solicitud a ti mismo');
-    }
-
-    // Verificar si ya existe una solicitud
-    const existing = await this.requestModel.findOne({
-      requesterID: requesterId,
-      recipientID: recipientId,
-      type: RequestType.FRIEND_REQUEST,
-      status: RequestStatus.PENDING,
-    });
-
-    if (existing) {
-      throw new BadRequestException('Ya existe una solicitud pendiente');
-    }
-
-    const request = new this.requestModel({
-    requesterID: new Types.ObjectId(requesterId),
-    recipientID: new Types.ObjectId(recipientId),
-    type: RequestType.FRIEND_REQUEST,
-    status: RequestStatus.PENDING,
-    }) as RequestDocument ;
-
-await request.save();
-
-// Crear notificación
-await this.notificationsService.createNotification({
-  recipientID: recipientId,
-  senderID: requesterId,
-  type: NotificationType.FRIEND_REQUEST,
-  message: 'te envió una solicitud de amistad',
-  relatedID: (request._id as Types.ObjectId).toString(),
-});
-
-    console.log('✅ Solicitud de amistad creada:', request._id);
-    return { success: true, message: 'Solicitud enviada', requestId: request._id };
   }
 
   // ✅ Crear solicitud para unirse a comunidad
@@ -218,27 +320,65 @@ await this.notificationsService.createNotification({
     return { success: true, message: 'Solicitud enviada', requestId: request._id };
   }
 
-  // ✅ Obtener estado de solicitud entre dos usuarios
-  async getFriendRequestStatus(userId: string, otherUserId: string) {
-    const request = await this.requestModel.findOne({
-      $or: [
-        { requesterID: userId, recipientID: otherUserId },
-        { requesterID: otherUserId, recipientID: userId },
-      ],
-      type: RequestType.FRIEND_REQUEST,
-      status: RequestStatus.PENDING,
-    });
+  // ✅ Cancelar solicitud enviada (solo el que la envió puede cancelarla)
+  async cancelRequest(requestId: string, requesterId: string) {
+    console.log('🚫 Cancelando solicitud:', requestId);
+
+    const request = await this.requestModel.findById(requestId);
 
     if (!request) {
-      return { status: 'none', canSendRequest: true };
+      throw new NotFoundException('Solicitud no encontrada');
     }
 
-    const isSender = request.requesterID.toString() === userId;
-    return {
-      status: 'pending',
-      canSendRequest: false,
-      isSender,
-      requestId: request._id,
-    };
+    if (request.status !== RequestStatus.PENDING) {
+      throw new BadRequestException('Esta solicitud ya fue procesada');
+    }
+
+    // Solo el que envió la solicitud puede cancelarla
+    if (request.requesterID.toString() !== requesterId) {
+      throw new BadRequestException('No puedes cancelar esta solicitud');
+    }
+
+    // Eliminar la solicitud
+    await this.requestModel.findByIdAndDelete(requestId);
+
+    // ✅ Eliminar la notificación asociada
+    try {
+      await this.notificationsService.deleteNotificationByRelatedId(requestId);
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+    }
+
+    console.log('✅ Solicitud cancelada');
+    return { success: true, message: 'Solicitud cancelada' };
+  }
+
+  // ✅ Obtener solicitudes ENVIADAS por el usuario (para saber cuáles puede cancelar)
+  async getSentRequests(userId: string) {
+    console.log('📤 Obteniendo solicitudes enviadas por:', userId);
+
+    const requests = await this.requestModel
+      .find({
+        requesterID: userId,
+        type: RequestType.FRIEND_REQUEST,
+        status: RequestStatus.PENDING,
+      })
+      .populate('recipientID', 'username userPhoto')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    console.log('✅ Solicitudes enviadas encontradas:', requests.length);
+
+    return requests.map((req: any) => ({
+      _id: req._id,
+      type: req.type,
+      recipient: {
+        _id: req.recipientID._id,
+        username: req.recipientID.username,
+        userPhoto: req.recipientID.userPhoto,
+      },
+      createdAt: req.createdAt,
+    }));
   }
 }

@@ -118,27 +118,21 @@ export const notifications_api = {
   },
 
   // ✅ Eliminar notificación
-  async deleteNotification(notificationId: string, token: string) {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/notifications/${notificationId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Error al eliminar notificación');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error:', error);
-      throw error;
+  // Eliminar una notificación específica
+async deleteNotification(notificationId: string, token: string) {
+  const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Error al eliminar notificación');
   }
+
+  return await response.json();
+}
 };

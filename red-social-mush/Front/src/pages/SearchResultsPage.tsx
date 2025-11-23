@@ -6,6 +6,8 @@ import { search_api } from '../services/search.api';
 import type { SearchResults } from '../services/search.api';
 import { useAuth } from '../hooks/useAuth';
 
+
+
 const SearchResultsPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -155,43 +157,51 @@ const SearchResultsPage = () => {
               </section>
             )}
 
-            {/* COMUNIDADES */}
-            {filtered.communities.length > 0 && (
-              <section>
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Comunidades</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filtered.communities.map(community => (
-                    <div
-                      key={community._id}
-                      onClick={() => handleCommunityClick(community._id)}
-                      className="bg-white rounded-xl p-4 shadow hover:shadow-md transition cursor-pointer"
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-orange-300 to-yellow-400 overflow-hidden flex-shrink-0">
-                          {community.mediaURL ? (
-                            <img src={community.mediaURL} alt={community.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white text-2xl">🏘️</div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-gray-800">{community.name}</h3>
-                          <p className="text-sm text-gray-500 line-clamp-2">{community.description}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs text-gray-600">{community.membersCount} miembros</span>
-                            {community.hashtags && community.hashtags.length > 0 && (
-                              <span className="text-xs text-orange-600">
-                                #{community.hashtags[0]}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+           {/* COMUNIDADES */}
+{filtered.communities.length > 0 && (
+  <section>
+    <h2 className="text-xl font-bold text-gray-800 mb-4">Comunidades</h2>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {filtered.communities.map(community => (
+        <div
+          key={community._id}
+          onClick={() => handleCommunityClick(community._id)}
+          className="bg-white rounded-xl p-4 shadow hover:shadow-md transition cursor-pointer"
+        >
+          <div className="flex items-start space-x-3">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-orange-300 to-yellow-400 overflow-hidden flex-shrink-0">
+              {community.mediaURL ? (
+                <img src={community.mediaURL} alt={community.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white text-2xl">🏘️</div>
+              )}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-gray-800">{community.name}</h3>
+                {/* ✅ Indicador de comunidad privada */}
+                {community.isPrivate && (
+                  <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                    🔒 Privada
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 line-clamp-2">{community.description}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-gray-600">{community.membersCount} miembros</span>
+                {community.hashtags && community.hashtags.length > 0 && (
+                  <span className="text-xs text-orange-600">
+                    #{community.hashtags[0]}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
 
             {/* POSTS */}
             {filtered.posts.length > 0 && (

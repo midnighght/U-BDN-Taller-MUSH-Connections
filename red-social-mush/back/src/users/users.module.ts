@@ -9,6 +9,7 @@ import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { Post, PostSchema } from 'src/posts/schemas/posts.schema';
 import { FriendshipsModule } from 'src/friendships/friendships.module';
 import { CommunitiesModule } from 'src/communities/communities.module';
+import { RequestsModule } from 'src/requests/requests.module';
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -16,6 +17,7 @@ import { CommunitiesModule } from 'src/communities/communities.module';
         {name: Post.name, schema: PostSchema}
        
     ]), UploadModule, CloudinaryModule, FriendshipsModule, 
+    RequestsModule,
     forwardRef(() => CommunitiesModule)
   ],
   providers: [UsersService,UploadService],

@@ -136,5 +136,53 @@
         console.error('Error:', error);
         throw error;
       }
+    },
+
+    async deletePost(postId: string, token: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al eliminar el post');
     }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error al eliminar post:', error);
+    throw error;
+  }
+},
+
+// ✅ Eliminar post como admin de comunidad
+async deletePostAsAdmin(communityId: string, postId: string, token: string) {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/communities/${communityId}/posts/${postId}`, 
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al eliminar el post');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error al eliminar post:', error);
+    throw error;
+  }
+}
   };

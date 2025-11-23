@@ -15,6 +15,7 @@ interface SearchCommunity {
   mediaURL: string;
   hashtags: string[];
   membersCount: number;
+  isPrivate?: boolean; // ✅ NUEVO
   type: 'community';
 }
 

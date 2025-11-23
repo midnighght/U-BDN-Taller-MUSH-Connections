@@ -18,16 +18,18 @@ interface PostGridProps {
   posts: Post[];
   cols?: 2 | 3 | 4;
   showAuthor?: boolean;
-  currentUser?: {
-    username: string;
-    userPhoto?: string;
-  };
+  onPostDeleted?: () => void; // ✅ Callback para refrescar posts
+  communityId?: string; // ✅ ID de comunidad si aplica
+  isAdmin?: boolean; // ✅ Si el usuario es admin de la comunidad
 }
 
 const PostGrid: React.FC<PostGridProps> = ({ 
   posts, 
   cols = 2, 
-  showAuthor = true 
+  showAuthor = true,
+  onPostDeleted,
+  communityId,
+  isAdmin = false
 }) => {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
@@ -35,6 +37,14 @@ const PostGrid: React.FC<PostGridProps> = ({
     2: 'grid-cols-2',
     3: 'grid-cols-3',
     4: 'grid-cols-4'
+  };
+
+  // ✅ Handler para cuando se elimina un post
+  const handlePostDeleted = () => {
+    setSelectedPostId(null);
+    if (onPostDeleted) {
+      onPostDeleted();
+    }
   };
 
   return (
@@ -122,6 +132,9 @@ const PostGrid: React.FC<PostGridProps> = ({
         <PostModal
           postId={selectedPostId}
           onClose={() => setSelectedPostId(null)}
+          onPostDeleted={handlePostDeleted}
+          communityId={communityId}
+          isAdmin={isAdmin}
         />
       )}
     </>

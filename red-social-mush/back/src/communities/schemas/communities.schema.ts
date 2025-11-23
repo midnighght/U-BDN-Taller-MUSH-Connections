@@ -6,7 +6,6 @@ export type CommunityDocument = Community & Document;
 
 @Schema()
 export class Community {
-
   @Prop({ required: true })
   name: string;
 

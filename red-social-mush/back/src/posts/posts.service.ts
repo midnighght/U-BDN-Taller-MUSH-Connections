@@ -6,13 +6,18 @@ import { CreatePostDTO } from './dto/posts.dto';
 import { Comment, CommentDocument } from 'src/comments/schemas/comments.schema';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
 import { CommentsService } from 'src/comments/comments.service'; 
+import { UploadService } from 'src/upload/upload.service';
+import { Community, CommunityDocument } from 'src/communities/schemas/communities.schema';
 @Injectable()
 export class PostsService {
+  
   constructor(
     @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
     @InjectModel(Comment.name) private readonly commentModel: Model<CommentDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-     private readonly commentsService: CommentsService
+     @InjectModel(Community.name) private readonly communityModel: Model<CommunityDocument>,
+     private readonly commentsService: CommentsService,
+     private readonly uploadService: UploadService
   ) {}
 
   async createPostInDb(@Body() createPostDto: CreatePostDTO, communityId?: string): Promise<boolean> {
@@ -131,4 +136,57 @@ export class PostsService {
       return { action: 'disliked', dislikesCount: post.reactionDown.length + 1 };
     }
   }
+  // ✅ Extraer public_id de una URL de Cloudinary
+private extractCloudinaryPublicId(url: string): string | null {
+  try {
+    // Ejemplo URL: https://res.cloudinary.com/demo/image/upload/v1234567/posts/abc123.jpg
+    const matches = url.match(/\/upload\/(?:v\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
+    return matches ? matches[1] : null;
+  } catch (error) {
+    console.error('Error extrayendo public_id:', error);
+    return null;
+  }
+}
+
+// ✅ Eliminar post (propio o como admin de comunidad)
+async deletePost(postId: string, userId: string, isAdmin: boolean = false) {
+  const post = await this.postModel.findById(postId);
+  
+  if (!post) {
+    throw new BadRequestException('Post no encontrado');
+  }
+
+  // Verificar permisos
+  const isOwner = post.authorID.toString() === userId;
+  
+  if (!isOwner && !isAdmin) {
+    throw new UnauthorizedException('No tienes permiso para eliminar este post');
+  }
+
+  // 🗑️ Eliminar imagen de Cloudinary
+  if (post.mediaURL) {
+    try {
+      const publicId = this.extractCloudinaryPublicId(post.mediaURL);
+      if (publicId) {
+        await this.uploadService.deleteImageFromCloudinary(publicId);
+        console.log('✅ Imagen eliminada de Cloudinary:', publicId);
+      }
+    } catch (error) {
+      console.error('⚠️ Error eliminando imagen de Cloudinary:', error);
+      // Continuar con la eliminación del post aunque falle Cloudinary
+    }
+  }
+
+  // Eliminar todos los comentarios asociados
+  await this.commentModel.deleteMany({ postID: postId });
+
+  // Eliminar el post
+  await this.postModel.findByIdAndDelete(postId);
+
+  return {
+    success: true,
+    message: 'Post eliminado exitosamente',
+    deletedBy: isOwner ? 'owner' : 'admin'
+  };
+}
 }

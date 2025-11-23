@@ -257,4 +257,15 @@ export class NotificationsService {
     console.log('🔍 Total de notificaciones en DB:', all.length);
     return all;
   }
+
+  async deleteNotificationByRelatedId(relatedId: string) {
+  console.log('🗑️ Eliminando notificación con relatedID:', relatedId);
+  
+  const result = await this.notificationModel.deleteMany({
+    relatedID: new Types.ObjectId(relatedId),
+  });
+
+  console.log(`✅ Notificaciones eliminadas: ${result.deletedCount}`);
+  return { success: true, deletedCount: result.deletedCount };
+}
 }

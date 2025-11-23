@@ -1,5 +1,5 @@
 import { friendships_api } from './friendships.api';
-
+import { requests_api } from './requests.api';
 const API_BASE_URL = 'http://localhost:3000';
 
 export const user_api = {
@@ -49,24 +49,42 @@ export const user_api = {
     }
   },
 
-  // ✅ Enviar solicitud de amistad (usa friendships_api)
+ // ✅ MODIFICADO: Enviar solicitud de amistad (ahora usa requests_api)
   async sendFriendRequest(recipientId: string, token: string) {
-    return await friendships_api.sendFriendRequest(recipientId, token);
+    return await requests_api.sendFriendRequest(recipientId, token);
   },
 
-  // ✅ Aceptar solicitud de amistad (usa friendships_api)
-  async acceptFriendRequest(friendshipId: string, token: string) {
-    return await friendships_api.acceptFriendRequest(friendshipId, token);
+  // ✅ MODIFICADO: Aceptar solicitud (ahora usa requests_api)
+  async acceptFriendRequest(requestId: string, token: string) {
+    return await requests_api.acceptRequest(requestId, token);
   },
 
-  // ✅ Rechazar solicitud de amistad (usa friendships_api)
-  async rejectFriendRequest(friendshipId: string, token: string) {
-    return await friendships_api.rejectFriendRequest(friendshipId, token);
+  // ✅ MODIFICADO: Rechazar solicitud (ahora usa requests_api)
+  async rejectFriendRequest(requestId: string, token: string) {
+    return await requests_api.rejectRequest(requestId, token);
   },
 
-  // ✅ Eliminar amigo (usa friendships_api)
+  // ✅ Eliminar amigo (sigue usando friendships porque es una amistad establecida)
   async removeFriend(friendId: string, token: string) {
-    return await friendships_api.removeFriend(friendId, token);
+    try {
+      const response = await fetch(`${API_BASE_URL}/friendships/remove/${friendId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error al eliminar amigo');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
+    }
   },
 
   // ✅ Bloquear usuario

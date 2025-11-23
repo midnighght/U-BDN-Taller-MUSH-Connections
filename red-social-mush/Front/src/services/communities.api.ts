@@ -402,5 +402,109 @@ async requestJoin(communityId: string, token: string) {
       console.error('Error fetching members:', error);
       throw error;
     }
+  },
+
+  /**
+ * Actualizar foto de la comunidad (solo superAdmin)
+ */
+async updateCommunityPhoto(communityId: string, imageBase64: string, token: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/communities/${communityId}/photo`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ image: imageBase64 })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Error al actualizar foto');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating community photo:', error);
+    throw error;
   }
+},
+
+/**
+ * Actualizar descripción de la comunidad (solo superAdmin)
+ */
+async updateCommunityDescription(communityId: string, description: string, token: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/communities/${communityId}/description`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ description })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Error al actualizar descripción');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating community description:', error);
+    throw error;
+  }
+},
+
+/**
+ * Actualizar hashtags de la comunidad (solo superAdmin)
+ */
+async updateCommunityHashtags(communityId: string, hashtags: string[], token: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/communities/${communityId}/hashtags`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ hashtags })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Error al actualizar hashtags');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating community hashtags:', error);
+    throw error;
+  }
+},
+
+/**
+ * Cambiar privacidad de la comunidad (solo superAdmin)
+ */
+async updateCommunityPrivacy(communityId: string, isPrivate: boolean, token: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/communities/${communityId}/privacy`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ isPrivate })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Error al actualizar privacidad');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating community privacy:', error);
+    throw error;
+  }
+}
 };
