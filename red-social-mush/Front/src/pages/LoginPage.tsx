@@ -1,23 +1,23 @@
-import { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Intentando login con:', email);
-    
+    console.log("Intentando login con:", email);
+
     const result = await login(email, password);
     if (result.success) {
-      console.log('✅ Login exitoso');
-      navigate('/home');
+      console.log("✅ Login exitoso");
+      navigate("/home");
     } else {
-      console.log('Error:', result.error);
+      console.log("Error:", result.error);
     }
   };
 
@@ -30,7 +30,9 @@ const LoginPage = () => {
       <div className="relative z-10 w-full max-w-4xl bg-[#FFE5C2]/80 backdrop-blur-md rounded-3xl shadow-lg flex flex-col md:flex-row overflow-hidden">
         {/* Formulario */}
         <div className="flex-1 p-10 flex flex-col justify-center">
-          <h1 className="text-5xl font-extrabold text-[#B24700] mb-10 text-center">MUSH</h1>
+          <h1 className="text-5xl font-extrabold text-[#B24700] mb-10 text-center">
+            MUSH
+          </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -66,7 +68,7 @@ const LoginPage = () => {
               disabled={loading}
               className="w-full bg-[#F45C1C] hover:bg-[#e05318] text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50"
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </button>
           </form>
 
@@ -80,9 +82,8 @@ const LoginPage = () => {
             </button>
             <span className="mx-2 text-gray-400">|</span>
             <button
-              type="button"
-              onClick={() => console.log("Olvidé contraseña")}
-              className="text-[#B24700] font-medium hover:underline"
+              onClick={() => navigate("/forgot-password")}
+              className="text-sm text-orange-600 hover:text-orange-700 underline"
             >
               ¿Olvidaste tu contraseña?
             </button>

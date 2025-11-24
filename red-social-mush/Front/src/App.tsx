@@ -10,6 +10,8 @@ import SearchResultsPage from './pages/SearchResultsPage';
 import UserProfilePage from './pages/UserProfilePage';
 
 import CommunityPage from './pages/CommunityPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function App() {
   return (
@@ -23,8 +25,9 @@ function App() {
           <Route path="/profile" element={<ProfilePage/>} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/users/:userId" element={<UserProfilePage />} />
-          
           <Route path="/communities/:communityId" element={<CommunityPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Routes>
       
     </BrowserRouter>

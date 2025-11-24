@@ -1,13 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-
 export type UserDocument = User & Document;
 
 @Schema()
 export class User {
-
-  
   @Prop({required: true })
   username: string;
   
@@ -39,12 +36,20 @@ export class User {
   Location?: string;
   
   @Prop({ default: false })
-  isVerified: boolean; // ✅ NUEVO: Para verificación de email
+  isVerified: boolean;
 
   @Prop({required: false})
-  verificationToken?: string; // ✅ NUEVO: Token de verificación
+  verificationToken?: string;
 
   @Prop({ required: false })
-  verificationTokenExpires?: Date; // ✅ NUEVO: Expiración del token
+  verificationTokenExpires?: Date;
+
+  // ✅ NUEVO: Para reset de contraseña
+  @Prop({required: false})
+  resetPasswordToken?: string;
+
+  @Prop({ required: false })
+  resetPasswordExpires?: Date;
 }
+
 export const UserSchema = SchemaFactory.createForClass(User);

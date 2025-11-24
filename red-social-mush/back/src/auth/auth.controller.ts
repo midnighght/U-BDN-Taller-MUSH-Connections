@@ -33,37 +33,45 @@ export class AuthController {
     return await this.authService.register(registerDTO);
   }
 
- @HttpCode(HttpStatus.OK)
-@Get('verify-email')
-async verifyEmail(@Query('token') token: string) {
-  
+  @HttpCode(HttpStatus.OK)
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string) {
+    if (!token) {
+      return { 
+        success: false, 
+        message: 'Token de verificación no proporcionado' 
+      };
+    }
+    
+    try {
+      const result = await this.authService.verifyEmail(token);
+      return { 
+        success: true, 
+        message: result.message 
+      };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        message: error.message || 'Error al verificar el email' 
+      };
+    }
+  }
 
-  if (!token) {
-    const response = { 
-      success: false, 
-      message: 'Token de verificación no proporcionado' 
-    };
-    
-    return response;
+  // ✅ NUEVO: Solicitar reset de contraseña
+  @HttpCode(HttpStatus.OK)
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { email: string }) {
+    return await this.authService.requestPasswordReset(body.email);
   }
-  
-  try {
-    const result = await this.authService.verifyEmail(token);
-    const response = { 
-      success: true, 
-      message: result.message 
-    };
-    
-    return response;
-  } catch (error: any) {
-    const response = { 
-      success: false, 
-      message: error.message || 'Error al verificar el email' 
-    };
-   
-    return response;
+
+  // ✅ NUEVO: Restablecer contraseña
+  @HttpCode(HttpStatus.OK)
+  @Post('reset-password')
+  async resetPassword(
+    @Body() body: { token: string; newPassword: string }
+  ) {
+    return await this.authService.resetPassword(body.token, body.newPassword);
   }
-}
 
   @UseGuards(AuthGuard) 
   @Get('me')
@@ -81,7 +89,7 @@ async verifyEmail(@Query('token') token: string) {
         description: user.description,
         userPhoto: user.userPhoto,
         isPrivate: user.isPrivate,
-        isVerified: user.isVerified, // ✅ AGREGAR ESTO
+        isVerified: user.isVerified,
         lastLogin: user.lastLogin,
         createdAt: user.createdAt,
         communities
