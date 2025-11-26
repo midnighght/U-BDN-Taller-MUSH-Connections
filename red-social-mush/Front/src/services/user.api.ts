@@ -1,9 +1,7 @@
-import { friendships_api } from './friendships.api';
 import { requests_api } from './requests.api';
 const API_BASE_URL = 'http://localhost:3000';
 
 export const user_api = {
-  // ✅ Ver perfil de otro usuario
   async getUserProfile(userId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
@@ -25,7 +23,6 @@ export const user_api = {
     }
   },
 
-  // NEW: Obtener posts de un usuario (respetar privacidad en backend)
   async getUserPosts(userId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/users/${userId}/posts`, {
@@ -37,9 +34,8 @@ export const user_api = {
       });
 
       if (!response.ok) {
-        // si el backend devuelve 403 por privacidad el cliente lo maneja
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || 'Error al obtener posts');
+        throw new Error('Error al obtener posts');
       }
 
       return await response.json();
@@ -49,22 +45,18 @@ export const user_api = {
     }
   },
 
- // ✅ MODIFICADO: Enviar solicitud de amistad (ahora usa requests_api)
   async sendFriendRequest(recipientId: string, token: string) {
     return await requests_api.sendFriendRequest(recipientId, token);
   },
 
-  // ✅ MODIFICADO: Aceptar solicitud (ahora usa requests_api)
   async acceptFriendRequest(requestId: string, token: string) {
     return await requests_api.acceptRequest(requestId, token);
   },
 
-  // ✅ MODIFICADO: Rechazar solicitud (ahora usa requests_api)
   async rejectFriendRequest(requestId: string, token: string) {
     return await requests_api.rejectRequest(requestId, token);
   },
 
-  // ✅ Eliminar amigo (sigue usando friendships porque es una amistad establecida)
   async removeFriend(friendId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/friendships/remove/${friendId}`, {
@@ -77,7 +69,7 @@ export const user_api = {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Error al eliminar amigo');
+        throw new Error('Error al eliminar amigo');
       }
 
       return await response.json();
@@ -87,7 +79,6 @@ export const user_api = {
     }
   },
 
-  // ✅ Bloquear usuario
   async blockUser(userId: string, token: string, reason?: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/blocks/${userId}`, {
@@ -110,7 +101,6 @@ export const user_api = {
     }
   },
 
-  // ✅ Desbloquear usuario
   async unblockUser(userId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/blocks/${userId}`, {

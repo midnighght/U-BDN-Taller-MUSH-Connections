@@ -17,7 +17,7 @@ export class EmailService {
     });
   }
 
-  // ✅ Email de verificación de cuenta
+
   async sendVerificationEmail(email: string, username: string, token: string) {
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
@@ -77,14 +77,13 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log('✅ Email de verificación enviado a:', email);
+      console.log('Email de verificación enviado a:', email);
     } catch (error) {
-      console.error('❌ Error al enviar email:', error);
+      console.error('Error al enviar email:', error);
       throw new Error('No se pudo enviar el email de verificación');
     }
   }
 
-  // ✅ Email de bienvenida
   async sendWelcomeEmail(email: string, username: string) {
     const mailOptions = {
       from: process.env.EMAIL_FROM,
@@ -119,13 +118,13 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log('✅ Email de bienvenida enviado a:', email);
+      console.log('Email de bienvenida enviado a:', email);
     } catch (error) {
-      console.error('❌ Error al enviar email de bienvenida:', error);
+      console.error('Error al enviar email de bienvenida:', error);
     }
   }
 
-  // ✅ Email de recuperación de contraseña
+
   async sendPasswordResetEmail(email: string, username: string, token: string) {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
@@ -191,9 +190,9 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log('✅ Email de recuperación enviado a:', email);
+      console.log('Email de recuperación enviado a:', email);
     } catch (error) {
-      console.error('❌ Error al enviar email de recuperación:', error);
+      console.error('Error al enviar email de recuperación:', error);
       throw new Error('No se pudo enviar el email de recuperación');
     }
   }

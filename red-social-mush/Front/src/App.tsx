@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
@@ -8,7 +7,6 @@ import './App.css';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import UserProfilePage from './pages/UserProfilePage';
-
 import CommunityPage from './pages/CommunityPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';

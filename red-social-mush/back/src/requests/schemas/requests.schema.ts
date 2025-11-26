@@ -21,7 +21,7 @@ export class Request {
   requesterID: Types.ObjectId; // Quien hace la solicitud
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: false })
-  recipientID?: Types.ObjectId; // Para amistades (usuario individual)
+  recipientID?: Types.ObjectId; // Para amistades 
 
   @Prop({ type: Types.ObjectId, ref: 'Community', required: false })
   communityID?: Types.ObjectId; // Para solicitudes de comunidad
@@ -41,7 +41,7 @@ export class Request {
   status: RequestStatus;
 
   @Prop({ type: Object, default: {} })
-  metadata: Record<string, any>; // Info adicional (ej: mensaje, rol solicitado)
+  metadata: Record<string, any>; 
 
   @Prop({ type: Date, default: Date.now })
   createdAt: Date;

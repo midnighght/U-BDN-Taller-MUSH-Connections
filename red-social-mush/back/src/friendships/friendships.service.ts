@@ -1,4 +1,3 @@
-// friendships/friendships.service.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -14,10 +13,9 @@ export class FriendshipsService {
   constructor(
     @InjectModel(Friendship.name)
     private friendshipModel: Model<FriendshipDocument>,
-    private neo4jService: Neo4jService, // ✅ Inyectar Neo4jService
+    private neo4jService: Neo4jService, 
   ) {}
 
-  // ✅ Eliminar amigo
   async removeFriend(userId: string, friendId: string) {
     const userObjectId = new Types.ObjectId(userId);
     const friendObjectId = new Types.ObjectId(friendId);
@@ -36,18 +34,15 @@ export class FriendshipsService {
 
     await this.friendshipModel.findByIdAndDelete(friendship._id);
 
-    // ✅ Sincronizar con Neo4j
     try {
       await this.neo4jService.removeFriendship(userId, friendId);
     } catch (error) {
-      console.error('⚠️ Error sincronizando eliminación con Neo4j:', error);
-      // No lanzar error - MongoDB es la fuente de verdad
+      console.error('Error sincronizando eliminación con Neo4j:', error);
     }
 
     return { success: true, message: 'Amistad eliminada' };
   }
 
-  // ✅ Obtener lista de amigos
   async getFriends(userId: string) {
     const userObjectId = new Types.ObjectId(userId);
 
@@ -75,7 +70,6 @@ export class FriendshipsService {
     });
   }
 
-  // ✅ Verificar estado de amistad
   async getFriendshipStatus(userId: string, otherUserId: string) {
     const userObjectId = new Types.ObjectId(userId);
     const otherUserObjectId = new Types.ObjectId(otherUserId);
@@ -95,7 +89,6 @@ export class FriendshipsService {
     return { status: 'none', canSendRequest: true };
   }
 
-  // ✅ Obtener amigos con paginación y búsqueda
   async getFriendsWithLimit(userId: string, limit?: number, search?: string) {
     const userObjectId = new Types.ObjectId(userId);
 
@@ -122,7 +115,6 @@ export class FriendshipsService {
       };
     });
 
-    // ✅ Filtrar por búsqueda si existe
     if (search) {
       const searchLower = search.toLowerCase();
       friends = friends.filter((friend) =>
@@ -130,7 +122,6 @@ export class FriendshipsService {
       );
     }
 
-    // ✅ Aplicar límite si existe
     if (limit) {
       friends = friends.slice(0, limit);
     }

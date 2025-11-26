@@ -12,6 +12,8 @@ import { communities_api } from '../services/communities.api';
 import { suggestions_api } from '../services/suggestions.api';
 import type { FeedPost as FeedPostType } from '../services/feed.api';
 
+import { Settings, Users, ArrowRight, Home, Lightbulb, UserCheck, Loader2, Crown, Star } from 'lucide-react'; 
+
 interface Friend {
   _id: string;
   username: string;
@@ -44,15 +46,12 @@ const HomePage = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
   
-  // ✅ Estado para sugerencias
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   
-  // ✅ Estado para comunidades
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loadingCommunities, setLoadingCommunities] = useState(true);
   
-  // Estados para el feed
   const [feedPosts, setFeedPosts] = useState<FeedPostType[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -90,13 +89,12 @@ const HomePage = () => {
       const data = await friendships_api.getFriendsLimited(token, 5);
       setFriends(data);
     } catch (error) {
-      console.error('Error al cargar amigos:', error);
+      console.error('Error al cargar amigos');
     } finally {
       setLoadingFriends(false);
     }
   };
 
-  // ✅ Cargar sugerencias
   const fetchSuggestions = async () => {
     if (!token) return;
     
@@ -111,7 +109,6 @@ const HomePage = () => {
     }
   };
 
-  // ✅ Cargar comunidades
   const fetchCommunities = async () => {
     if (!token) return;
     
@@ -168,13 +165,12 @@ const HomePage = () => {
     fetchFeed(true);
   };
 
-  // ✅ Obtener badge de rol
   const getRoleBadge = (community: Community) => {
     if (community.isSuperAdmin) {
-      return <span className="text-[10px] text-purple-500">👑</span>;
+      return <Crown className="w-3 h-3 text-yellow-500 fill-yellow-500" />;
     }
     if (community.isAdmin) {
-      return <span className="text-[10px] text-orange-500">⭐</span>;
+      return <Star className="w-3 h-3 text-orange-500 fill-orange-500" />;
     }
     return null;
   };
@@ -182,109 +178,114 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-[#fff8f5] flex flex-col">
       <Header />
+      <div className="pt-20"></div>
 
-      <main className="flex flex-1 mt-4 px-8 space-x-8 max-w-7xl mx-auto w-full">
+      <main className="flex flex-1 mt-4 px-4 md:px-8 space-x-0 md:space-x-8 max-w-7xl mx-auto w-full">
         {/* COLUMNA IZQUIERDA: COMUNIDADES */}
-        <aside className="w-1/5">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Comunidades</h2>
-            <button
-              onClick={() => setOpenModal(true)}
-              className="text-sm bg-gradient-to-r from-orange-400 to-red-400 text-white px-3 py-1 rounded-full shadow hover:scale-105 transition"
-            >
-              ⚙️
-            </button>
-          </div>
-
-          {loadingCommunities ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-            </div>
-          ) : communities.length === 0 ? (
-            <div className="text-center py-6 text-gray-400">
-              <span className="text-3xl mb-2 block">🏘️</span>
-              <p className="text-sm mb-2">No tienes comunidades</p>
+        <aside className="hidden lg:block lg:w-1/4 xl:w-1/5 sticky top-20 h-[calc(100vh-80px)] overflow-y-auto pr-2">
+          <div className="bg-white rounded-xl shadow-md p-4 border border-[#f7cda3]/50">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-[#B24700] flex items-center">
+                <Home className="w-5 h-5 mr-2" />
+                Mis Comunidades
+              </h2>
               <button
                 onClick={() => setOpenModal(true)}
-                className="text-orange-500 hover:text-orange-600 text-sm font-medium"
+                className="text-sm bg-[#F45C1C] text-white p-1 rounded-full shadow-md hover:scale-110 transition group"
+                title="Administrar Comunidades"
               >
-                Crear o unirse
+                <Settings className="w-4 h-4" />
               </button>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {communities.map((community) => (
-                <div
-                  key={community._id}
-                  onClick={() => navigate(`/communities/${community._id}`)}
-                  className="flex items-center p-2 rounded-xl hover:bg-white hover:shadow-md transition cursor-pointer group"
-                >
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-300 to-yellow-400 rounded-full overflow-hidden flex-shrink-0">
-                    {community.mediaURL ? (
-                      <img
-                        src={community.mediaURL}
-                        alt={community.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white text-lg">
-                        🏘️
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="ml-3 flex-1 min-w-0">
-                    <div className="flex items-center gap-1">
-                      <p className="font-semibold text-gray-800 text-sm truncate">
-                        {community.name}
-                      </p>
-                      {getRoleBadge(community)}
-                    </div>
-                    <p className="text-[11px] text-gray-400">
-                      {community.membersCount + community.adminsCount} miembros
-                    </p>
-                  </div>
 
-                  <span className="text-gray-300 group-hover:text-orange-400 transition">
-                    →
-                  </span>
-                </div>
-              ))}
-
-              {communities.length >= 5 && (
+            {loadingCommunities ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="animate-spin h-6 w-6 text-[#F45C1C]" />
+              </div>
+            ) : communities.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                <Home className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-xs mb-2">No tienes comunidades</p>
                 <button
                   onClick={() => setOpenModal(true)}
-                  className="w-full text-center text-sm text-orange-500 hover:text-orange-600 font-medium py-2"
+                  className="text-[#F45C1C] hover:text-[#B24700] text-xs font-medium"
                 >
-                  Ver todas →
+                  Crear o unirse
                 </button>
-              )}
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {communities.map((community) => (
+                  <div
+                    key={community._id}
+                    onClick={() => navigate(`/communities/${community._id}`)}
+                    className="flex items-center p-2 rounded-lg hover:bg-[#fff8f5] transition cursor-pointer group border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="w-8 h-8 bg-[#FFD89C] rounded-full overflow-hidden flex-shrink-0 border border-[#f7cda3]">
+                      {community.mediaURL ? (
+                        <img
+                          src={community.mediaURL}
+                          alt={community.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[#B24700] text-md">
+                          <Home className="w-4 h-4" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="ml-3 flex-1 min-w-0">
+                      <div className="flex items-center gap-1">
+                        <p className="font-semibold text-gray-800 text-sm truncate">
+                          {community.name}
+                        </p>
+                        {getRoleBadge(community)}
+                      </div>
+                      <p className="text-[10px] text-gray-500">
+                        {community.membersCount + community.adminsCount} miembros
+                      </p>
+                    </div>
+
+                    <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#F45C1C] transition opacity-0 group-hover:opacity-100" />
+                  </div>
+                ))}
+
+                {communities.length >= 5 && (
+                  <button
+                    onClick={() => setOpenModal(true)}
+                    className="w-full text-center text-sm text-[#F45C1C] hover:text-[#B24700] font-medium py-2 mt-2"
+                  >
+                    Ver todas <ArrowRight className="inline w-3 h-3 ml-1" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </aside>
 
         {/* COLUMNA CENTRAL: FEED */}
-        <section className="flex-1">
+        <section className="w-full lg:w-3/4 xl:w-3/5">
           <div className="mb-6">
-            <PostCard />
+            <PostCard /> 
           </div>
 
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+              <Loader2 className="animate-spin h-12 w-12 text-[#F45C1C]" />
             </div>
           ) : feedPosts.length === 0 ? (
-            <div className="bg-white rounded-3xl shadow-md p-12 text-center">
-              <span className="text-6xl mb-4 block">📸</span>
+            <div className="bg-white rounded-xl shadow-md p-12 text-center border border-[#f7cda3]/50">
+              <Lightbulb className="w-10 h-10 mx-auto mb-4 text-[#F45C1C]" />
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                No hay publicaciones
+                ¡El feed está vacío!
               </h3>
               <p className="text-gray-500">
-                Sigue a más personas o únete a comunidades para ver contenido aquí
+                Sigue a más personas o únete a comunidades para ver contenido aquí.
               </p>
             </div>
           ) : (
-            <>
+            <div className="space-y-4">
               {feedPosts.map((post, index) => {
                 if (index === feedPosts.length - 1) {
                   return (
@@ -298,125 +299,130 @@ const HomePage = () => {
 
               {loadingMore && (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  <Loader2 className="animate-spin h-6 w-6 text-[#F45C1C]" />
                 </div>
               )}
 
               {!hasMore && feedPosts.length > 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <p className="text-sm">🎉 Has visto todas las publicaciones</p>
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm font-medium">✨ Has visto todas las publicaciones</p>
                 </div>
               )}
-            </>
+            </div>
           )}
         </section>
 
         {/* COLUMNA DERECHA: AMIGOS Y SUGERENCIAS */}
-        <aside className="w-1/5">
+        <aside className="hidden md:block md:w-1/4 xl:w-1/5 sticky top-20 h-[calc(100vh-80px)] overflow-y-auto pl-2">
+          
           {/* Sección de Amigos */}
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Amigos</h2>
-            <button
-              onClick={() => setShowFriendsModal(true)}
-              className="text-sm bg-gradient-to-r from-orange-400 to-pink-500 text-white px-3 py-1 rounded-full shadow hover:scale-105 transition"
-            >
-              Ver todos
-            </button>
+          <div className="bg-white rounded-xl shadow-md p-4 mb-6 border border-[#f7cda3]/50">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-[#B24700] flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                Amigos
+              </h2>
+              <button
+                onClick={() => setShowFriendsModal(true)}
+                className="text-xs bg-[#F45C1C] hover:bg-[#c94917] text-white px-3 py-1 rounded-full font-semibold shadow-md transition-all"
+              >
+                Ver todos
+              </button>
+            </div>
+
+            {loadingFriends ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="animate-spin h-6 w-6 text-[#F45C1C]" />
+              </div>
+            ) : friends.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-xs">Aún no tienes amigos</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {friends.map((friend) => (
+                  <div
+                    key={friend._id}
+                    onClick={() => navigate(`/users/${friend._id}`)}
+                    className="flex items-center p-2 rounded-lg hover:bg-[#fff8f5] transition cursor-pointer group border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="w-8 h-8 bg-[#FFD89C] rounded-full overflow-hidden flex-shrink-0 border border-[#f7cda3]">
+                      {friend.userPhoto ? (
+                        <img
+                          src={friend.userPhoto}
+                          alt={friend.username}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white font-bold bg-[#B24700]">
+                          {friend.username.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-3 flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 text-sm truncate">
+                        {friend.username}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#F45C1C] transition opacity-0 group-hover:opacity-100" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {loadingFriends ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-            </div>
-          ) : friends.length === 0 ? (
-            <div className="text-center py-6 text-gray-400">
-              <span className="text-3xl mb-2 block">👥</span>
-              <p className="text-sm">Aún no tienes amigos</p>
-            </div>
-          ) : (
-            <div className="space-y-3 mb-8">
-              {friends.map((friend) => (
-                <div
-                  key={friend._id}
-                  onClick={() => navigate(`/users/${friend._id}`)}
-                  className="flex items-center p-2 rounded-xl hover:bg-white hover:shadow-md transition cursor-pointer group"
-                >
-                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-full overflow-hidden flex-shrink-0">
-                    {friend.userPhoto ? (
-                      <img
-                        src={friend.userPhoto}
-                        alt={friend.username}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                        {friend.username.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="ml-3 flex-1 min-w-0">
-                    <p className="font-semibold text-gray-800 text-sm truncate">
-                      {friend.username}
-                    </p>
-                  </div>
-                  <span className="text-gray-300 group-hover:text-orange-400 transition">
-                    →
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Sección de Sugerencias */}
+          <div className="bg-white rounded-xl shadow-md p-4 border border-[#f7cda3]/50">
+            <h2 className="text-lg font-bold mb-4 text-[#B24700] flex items-center">
+              <Lightbulb className="w-5 h-5 mr-2" />
+              Sugerencias
+            </h2>
 
-          {/* ✅ Sección de Sugerencias */}
-          <h2 className="text-xl font-bold mt-8 mb-4 text-gray-800">
-            Sugerencias
-          </h2>
-
-          {loadingSuggestions ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-            </div>
-          ) : suggestions.length === 0 ? (
-            <div className="text-center py-6 text-gray-400">
-              <span className="text-3xl mb-2 block">💡</span>
-              <p className="text-sm">No hay sugerencias disponibles</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {suggestions.map((suggestion) => (
-                <div
-                  key={suggestion._id}
-                  onClick={() => navigate(`/users/${suggestion._id}`)}
-                  className="flex items-center p-3 rounded-xl bg-purple-50 hover:bg-purple-100 transition cursor-pointer group border border-purple-100"
-                >
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-300 to-pink-400 rounded-full overflow-hidden flex-shrink-0">
-                    {suggestion.userPhoto ? (
-                      <img
-                        src={suggestion.userPhoto}
-                        alt={suggestion.username}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                        {suggestion.username.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+            {loadingSuggestions ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="animate-spin h-6 w-6 text-purple-600" />
+              </div>
+            ) : suggestions.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                <UserCheck className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-xs">No hay sugerencias disponibles</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {suggestions.map((suggestion) => (
+                  <div
+                    key={suggestion._id}
+                    onClick={() => navigate(`/users/${suggestion._id}`)}
+                    className="flex items-center p-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition cursor-pointer group border border-purple-100"
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-300 to-pink-400 rounded-full overflow-hidden flex-shrink-0 border border-purple-200">
+                      {suggestion.userPhoto ? (
+                        <img
+                          src={suggestion.userPhoto}
+                          alt={suggestion.username}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white font-bold bg-purple-600 text-sm">
+                          {suggestion.username.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-3 flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 text-sm truncate">
+                        {suggestion.username}
+                      </p>
+                      <p className="text-[10px] text-purple-600">
+                        {suggestion.mutualFriends} {suggestion.mutualFriends === 1 ? 'amigo' : 'amigos'} en común
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-purple-300 group-hover:text-purple-500 transition opacity-0 group-hover:opacity-100" />
                   </div>
-                  <div className="ml-3 flex-1 min-w-0">
-                    <p className="font-semibold text-gray-800 text-sm truncate">
-                      {suggestion.username}
-                    </p>
-                    <p className="text-[11px] text-purple-600">
-                      {suggestion.mutualFriends} {suggestion.mutualFriends === 1 ? 'amigo' : 'amigos'} en común
-                    </p>
-                  </div>
-                  <span className="text-purple-300 group-hover:text-purple-500 transition">
-                    →
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </aside>
       </main>
 
@@ -433,4 +439,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;  
+export default HomePage;

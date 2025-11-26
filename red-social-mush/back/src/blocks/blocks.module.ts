@@ -12,6 +12,6 @@ import { User, UserSchema } from 'src/users/schemas/user.schema';
   ],
   controllers: [BlocksController],
   providers: [BlocksService],
-  exports: [BlocksService], // Para usar en otros módulos
+  exports: [BlocksService], 
 })
 export class BlocksModule {}

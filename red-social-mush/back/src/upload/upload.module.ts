@@ -3,7 +3,7 @@ import { UploadService } from './upload.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
-  imports: [CloudinaryModule], // Importar módulo de Cloudinary
+  imports: [CloudinaryModule], 
   providers: [UploadService],
   exports: [UploadService],
 })

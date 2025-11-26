@@ -28,7 +28,7 @@ export class PostsService {
       textBody: createPostDto.description,
       usertags: createPostDto.taggedUsers,
       hashtags: createPostDto.hashtags,
-      ...(communityId && { comunityID: communityId }) // ✅ Agregar communityId si existe
+      ...(communityId && { comunityID: communityId }) 
     });
     
     await post.save();
@@ -58,7 +58,7 @@ export class PostsService {
   async getPostWithDetails(postId: string, currentUserId: string) {
   const post = await this.postModel
     .findById(postId)
-    .populate('authorID', 'username userPhoto') // Esto ya lo tienes
+    .populate('authorID', 'username userPhoto') 
     .lean()
     .exec();
 
@@ -81,7 +81,6 @@ export class PostsService {
   };
 }
 
-  // ✅ Toggle Like
   async toggleLike(postId: string, userId: string) {
     const post = await this.postModel.findById(postId);
     if (!post) throw new BadRequestException('Post no encontrado');
@@ -109,7 +108,6 @@ export class PostsService {
     }
   }
 
-  // ✅ Toggle Dislike
   async toggleDislike(postId: string, userId: string) {
     const post = await this.postModel.findById(postId);
     if (!post) throw new BadRequestException('Post no encontrado');
@@ -136,10 +134,8 @@ export class PostsService {
       return { action: 'disliked', dislikesCount: post.reactionDown.length + 1 };
     }
   }
-  // ✅ Extraer public_id de una URL de Cloudinary
 private extractCloudinaryPublicId(url: string): string | null {
   try {
-    // Ejemplo URL: https://res.cloudinary.com/demo/image/upload/v1234567/posts/abc123.jpg
     const matches = url.match(/\/upload\/(?:v\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
     return matches ? matches[1] : null;
   } catch (error) {
@@ -148,7 +144,6 @@ private extractCloudinaryPublicId(url: string): string | null {
   }
 }
 
-// ✅ Eliminar post (propio o como admin de comunidad)
 async deletePost(postId: string, userId: string, isAdmin: boolean = false) {
   const post = await this.postModel.findById(postId);
   
@@ -156,31 +151,26 @@ async deletePost(postId: string, userId: string, isAdmin: boolean = false) {
     throw new BadRequestException('Post no encontrado');
   }
 
-  // Verificar permisos
   const isOwner = post.authorID.toString() === userId;
   
   if (!isOwner && !isAdmin) {
     throw new UnauthorizedException('No tienes permiso para eliminar este post');
   }
 
-  // 🗑️ Eliminar imagen de Cloudinary
   if (post.mediaURL) {
     try {
       const publicId = this.extractCloudinaryPublicId(post.mediaURL);
       if (publicId) {
         await this.uploadService.deleteImageFromCloudinary(publicId);
-        console.log('✅ Imagen eliminada de Cloudinary:', publicId);
+        console.log('Imagen eliminada de Cloudinary:', publicId);
       }
     } catch (error) {
-      console.error('⚠️ Error eliminando imagen de Cloudinary:', error);
-      // Continuar con la eliminación del post aunque falle Cloudinary
+      console.error('Error eliminando imagen de Cloudinary:', error);
     }
   }
 
-  // Eliminar todos los comentarios asociados
   await this.commentModel.deleteMany({ postID: postId });
 
-  // Eliminar el post
   await this.postModel.findByIdAndDelete(postId);
 
   return {

@@ -1,4 +1,3 @@
-// suggestions/suggestions.controller.ts
 import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
 import { SuggestionsService } from './suggestions.service';
 import { AuthGuard } from 'src/auth/guards/auth.guards';
@@ -8,10 +7,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guards';
 export class SuggestionsController {
   constructor(private readonly suggestionsService: SuggestionsService) {}
 
-  /**
-   * GET /suggestions/friends
-   * Obtener sugerencias de amigos
-   */
+  
   @Get('friends')
   async getFriendSuggestions(
     @Request() req,

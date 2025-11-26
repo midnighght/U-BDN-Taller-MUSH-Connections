@@ -4,9 +4,7 @@ import { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 
 @Injectable()
 export class CloudinaryService {
-  /**
-   * Sube una imagen a Cloudinary desde un buffer
-   */
+  
   async uploadImage(
     file: Express.Multer.File,
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
@@ -14,7 +12,7 @@ export class CloudinaryService {
       cloudinary.uploader
         .upload_stream(
           {
-            folder: 'posts', // Carpeta en Cloudinary
+            folder: 'posts', 
             resource_type: 'auto',
           },
           (error, result) => {
@@ -26,9 +24,7 @@ export class CloudinaryService {
     });
   }
 
-  /**
-   * Elimina una imagen de Cloudinary
-   */
+  
   async deleteImage(publicId: string): Promise<any> {
     return cloudinary.uploader.destroy(publicId);
   }

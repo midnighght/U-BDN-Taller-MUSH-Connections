@@ -29,7 +29,7 @@ export class CommunitiesService {
     });
 
     if (existingCommunity) {
-      throw new UnauthorizedException('Community already exists');
+      throw new UnauthorizedException('Ya existe la comunidad');
     }
 
     const imageBase64 = createComunityDTO.image.toString();
@@ -51,8 +51,8 @@ export class CommunitiesService {
       await community.save();
       return { success: true, communityId: community._id };
     } catch (error) {
-      console.error('Error saving community:', error);
-      throw new BadRequestException('Error creating community');
+      console.error('Error al guardar la comunidad');
+      throw new BadRequestException('Error al crear la comunidad');
     }
   }
 
@@ -103,7 +103,7 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
     const isSuperAdmin = community.superAdminID.toString() === userId;
@@ -111,16 +111,16 @@ export class CommunitiesService {
     if (isSuperAdmin) {
       return {
         success: false,
-        message: 'You are a superAdmin, transfer ownership before leaving',
+        message: 'Eres super admin, dale tu rol a otra persona antes de salir',
       };
     }
 
-    // ✅ Cambiar a .toString()
+    
     const isMember = community.memberID.some((id) => id.toString() === userId);
     const isAdmin = community.adminID.some((id) => id.toString() === userId);
 
     if (!isMember && !isAdmin) {
-      throw new BadRequestException('Not a member of this community');
+      throw new BadRequestException('No eres miembro de la comunidad');
     }
 
     try {
@@ -134,11 +134,11 @@ export class CommunitiesService {
 
       return {
         success: true,
-        message: 'Successfully left the community',
+        message: 'Te has salido correctamente de la comunidad',
       };
     } catch (error) {
       console.error('Error updating community:', error);
-      throw new BadRequestException('Error leaving the community');
+      throw new BadRequestException('Error al salir de la comunidad');
     }
   }
 
@@ -146,7 +146,7 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
     let userRole: 'superAdmin' | 'admin' | 'member' | 'pending' | 'none' =
@@ -190,7 +190,7 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
     const isMember = community.memberID.some((id) => id.toString() === userId);
@@ -198,7 +198,7 @@ export class CommunitiesService {
     const isSuperAdmin = community.superAdminID.toString() === userId;
 
     if (community.isPrivate && !isMember && !isAdmin && !isSuperAdmin) {
-      throw new ForbiddenException('You must be a member to view posts');
+      throw new ForbiddenException('Tienes que ser miembro de la comunidad para ver sus posts');
     }
 
     const posts = await this.postModel
@@ -213,16 +213,16 @@ export class CommunitiesService {
 
   async joinCommunity(communityId: string, userId: string) {
     try {
-      console.log('🔍 Intentando unirse a comunidad:', { communityId, userId });
+      console.log('Intentando unirse a comunidad:', { communityId, userId });
 
       const community = await this.communityModel.findById(communityId);
 
       if (!community) {
-        console.log('❌ Comunidad no encontrada:', communityId);
-        throw new BadRequestException('Community not found');
+        console.log('Comunidad no encontrada:');
+        throw new BadRequestException('Comunidad no encontrada');
       }
 
-      console.log('✅ Comunidad encontrada:', {
+      console.log('Comunidad encontrada:', {
         name: community.name,
         isPrivate: community.isPrivate,
         superAdminID: community.superAdminID,
@@ -230,31 +230,31 @@ export class CommunitiesService {
       });
 
       if (community.isPrivate) {
-        console.log('❌ Comunidad es privada');
+        console.log('Comunidad es privada');
         throw new BadRequestException(
-          'This community is private, request to join instead',
+          'Esta comunidad es privada, envía solicitud para entrar',
         );
       }
 
-      console.log('🔍 Verificando si ya es miembro...');
+     
 
-      // ✅ Cambiar a .toString()
+    
       const isMember = community.memberID.some((id) => id.toString() === userId);
       const isAdmin = community.adminID.some((id) => id.toString() === userId);
       const isSuperAdmin = community.superAdminID.toString() === userId;
 
-      console.log('📊 Estado del usuario:', {
+      console.log('Estado del usuario:', {
         isMember,
         isAdmin,
         isSuperAdmin,
       });
 
       if (isMember || isAdmin || isSuperAdmin) {
-        console.log('❌ Ya es miembro');
-        throw new BadRequestException('Already a member of this community');
+        console.log('Ya es miembro');
+        throw new BadRequestException('Ya eres miembro de esta comunidad');
       }
 
-      console.log('✅ Agregando usuario a la comunidad...');
+      
 
       const userObjectId = new Types.ObjectId(userId);
       const result = await this.communityModel.findByIdAndUpdate(
@@ -264,14 +264,14 @@ export class CommunitiesService {
       );
 
       console.log(
-        '✅ Usuario agregado exitosamente. Total miembros:',
+        'Usuario agregado exitosamente. Total miembros:',
         result?.memberID.length,
       );
 
-      return { success: true, message: 'Joined community successfully' };
+      return { success: true, message: 'Te has unido correctamente' };
     } catch (error) {
-      console.error('❌ Error en joinCommunity:', error);
-      throw error;
+      console.error('Error en joinCommunity:', error);
+      throw new Error('Error al entrar en la comunidad');
     }
   }
 
@@ -279,7 +279,7 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
     if (!community.isPrivate) {
@@ -288,17 +288,17 @@ export class CommunitiesService {
       );
     }
 
-    // ✅ Cambiar TODAS a .toString()
+
     const isMember = community.memberID.some((id) => id.toString() === userId);
     const isAdmin = community.adminID.some((id) => id.toString() === userId);
     const isSuperAdmin = community.superAdminID.toString() === userId;
 
     if (isMember || isAdmin || isSuperAdmin) {
-      throw new BadRequestException('Already a member of this community');
+      throw new BadRequestException('Ya eres miembro de esta comunidad');
     }
 
     if (community.pendingRequestID.some((id) => id.toString() === userId)) {
-      throw new BadRequestException('Request already pending');
+      throw new BadRequestException('Ya hay una solicitud pendiente');
     }
 
     const userObjectId = new Types.ObjectId(userId);
@@ -306,17 +306,17 @@ export class CommunitiesService {
       $addToSet: { pendingRequestID: userObjectId },
     });
 
-    return { success: true, message: 'Join request sent' };
+    return { success: true, message: 'Solicitud enviada' };
   }
 
   async getPendingRequests(communityId: string, userId: string) {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+    
     const isAdmin = community.adminID.some((id) => id.toString() === userId);
     const isSuperAdmin = community.superAdminID.toString() === userId;
 
@@ -340,10 +340,10 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+   
     const isAdmin = community.adminID.some((id) => id.toString() === adminUserId);
     const isSuperAdmin = community.superAdminID.toString() === adminUserId;
 
@@ -358,7 +358,7 @@ export class CommunitiesService {
       $addToSet: { memberID: requestUserObjectId },
     });
 
-    return { success: true, message: 'Request accepted' };
+    return { success: true, message: 'Solicitud aceptada' };
   }
 
   async rejectRequest(
@@ -369,10 +369,10 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+  
     const isAdmin = community.adminID.some((id) => id.toString() === adminUserId);
     const isSuperAdmin = community.superAdminID.toString() === adminUserId;
 
@@ -386,7 +386,7 @@ export class CommunitiesService {
       $pull: { pendingRequestID: requestUserObjectId },
     });
 
-    return { success: true, message: 'Request rejected' };
+    return { success: true, message: 'Solicitud rechazada' };
   }
 
   async removeMember(
@@ -397,10 +397,10 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+   
     const isAdmin = community.adminID.some((id) => id.toString() === adminUserId);
     const isSuperAdmin = community.superAdminID.toString() === adminUserId;
 
@@ -408,9 +408,9 @@ export class CommunitiesService {
       throw new ForbiddenException('Only admins can remove members');
     }
 
-    // ✅ Cambiar a .toString()
+    
     if (community.superAdminID.toString() === memberUserId) {
-      throw new BadRequestException('Cannot remove super admin');
+      throw new BadRequestException('No puedes eliminar al superAdmin');
     }
 
     const memberObjectId = new Types.ObjectId(memberUserId);
@@ -436,12 +436,12 @@ export class CommunitiesService {
       throw new BadRequestException('Community not found');
     }
 
-    // ✅ Cambiar a .toString()
+    
     if (community.superAdminID.toString() !== superAdminUserId) {
       throw new ForbiddenException('Only super admin can promote members');
     }
 
-    // ✅ Cambiar a .toString()
+    
     if (!community.memberID.some((id) => id.toString() === memberUserId)) {
       throw new BadRequestException('User is not a member');
     }
@@ -453,7 +453,7 @@ export class CommunitiesService {
       $addToSet: { adminID: memberObjectId },
     });
 
-    return { success: true, message: 'Member promoted to admin' };
+    return { success: true, message: 'Miembro ascendido a Admin' };
   }
 
   async demoteFromAdmin(
@@ -464,10 +464,10 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+    
     if (community.superAdminID.toString() !== superAdminUserId) {
       throw new ForbiddenException('Only super admin can demote admins');
     }
@@ -479,7 +479,7 @@ export class CommunitiesService {
       $addToSet: { memberID: adminObjectId },
     });
 
-    return { success: true, message: 'Admin demoted to member' };
+    return { success: true, message: 'Admin descendido a Miembro' };
   }
 
   async transferOwnership(
@@ -490,17 +490,17 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+    
     if (community.superAdminID.toString() !== currentOwnerId) {
       throw new ForbiddenException(
         'Only current super admin can transfer ownership',
       );
     }
 
-    // ✅ Cambiar a .toString()
+    
     const isNewOwnerMember = community.memberID.some((id) => id.toString() === newOwnerId);
     const isNewOwnerAdmin = community.adminID.some((id) => id.toString() === newOwnerId);
 
@@ -510,7 +510,7 @@ export class CommunitiesService {
 
     const newOwnerObjectId = new Types.ObjectId(newOwnerId);
 
-    // 1️⃣ Primero: Remover al nuevo owner de memberID y adminID
+    
     await this.communityModel.findByIdAndUpdate(communityId, {
       $pull: {
         memberID: newOwnerObjectId,
@@ -518,24 +518,24 @@ export class CommunitiesService {
       },
     });
 
-    // 2️⃣ Segundo: Actualizar superAdmin y agregar el antiguo owner a adminID
+  
     const currentOwnerObjectId = new Types.ObjectId(currentOwnerId);
     await this.communityModel.findByIdAndUpdate(communityId, {
       superAdminID: newOwnerObjectId,
       $addToSet: { adminID: currentOwnerObjectId },
     });
 
-    return { success: true, message: 'Ownership transferred successfully' };
+    return { success: true, message: 'Rol transferido exitosamente' };
   }
 
   async deleteCommunity(communityId: string, userId: string) {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+
     if (community.superAdminID.toString() !== userId) {
       throw new ForbiddenException('Only super admin can delete the community');
     }
@@ -543,17 +543,17 @@ export class CommunitiesService {
     await this.postModel.deleteMany({ comunityID: communityId });
     await this.communityModel.findByIdAndDelete(communityId);
 
-    return { success: true, message: 'Community deleted successfully' };
+    return { success: true, message: 'Comunidad eliminada exitosamente' };
   }
 
   async getCommunityMembers(communityId: string, userId: string) {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+    
     const isMember = community.memberID.some((id) => id.toString() === userId);
     const isAdmin = community.adminID.some((id) => id.toString() === userId);
     const isSuperAdmin = community.superAdminID.toString() === userId;
@@ -599,7 +599,7 @@ export class CommunitiesService {
       throw new NotFoundException('Comunidad no encontrada');
     }
 
-    // ✅ Cambiar a .toString()
+    
     return (
       community.superAdminID.toString() === userId ||
       community.adminID.some((id) => id.toString() === userId)
@@ -627,7 +627,7 @@ export class CommunitiesService {
       mediaURL: imageUrl,
     });
 
-    return { success: true, message: 'Community photo updated', mediaURL: imageUrl };
+    return { success: true, message: 'Foto de la comunidad actualizada' };
   }
 
   async updateCommunityDescription(
@@ -638,7 +638,7 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
     if (community.superAdminID.toString() !== userId) {
@@ -649,7 +649,7 @@ export class CommunitiesService {
       description,
     });
 
-    return { success: true, message: 'Community description updated' };
+    return { success: true, message: 'Descripción de la comunidad actualizada' };
   }
 
   async updateCommunityHashtags(
@@ -660,7 +660,7 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
     if (community.superAdminID.toString() !== userId) {
@@ -671,7 +671,7 @@ export class CommunitiesService {
       hashtags,
     });
 
-    return { success: true, message: 'Community hashtags updated' };
+    return { success: true, message: 'Hashtags de la comunidad actualizados' };
   }
 
   async updateCommunityPrivacy(
@@ -682,7 +682,7 @@ export class CommunitiesService {
     const community = await this.communityModel.findById(communityId);
 
     if (!community) {
-      throw new BadRequestException('Community not found');
+      throw new BadRequestException('Comunidad no encontrada');
     }
 
     if (community.superAdminID.toString() !== userId) {
@@ -693,6 +693,6 @@ export class CommunitiesService {
       isPrivate,
     });
 
-    return { success: true, message: 'Community privacy updated', isPrivate };
+    return { success: true, message: 'Privacidad de la comunidad actualizada', isPrivate };
   }
 }

@@ -7,7 +7,7 @@
   taggedUsers: string, 
   hashtags: string, 
   token: string,
-  communityId?: string // ✅ Parámetro opcional para comunidad
+  communityId?: string 
 ): Promise<boolean> {
   try {
     const noSpacesTaggedUsers = taggedUsers.replace(/\s/g, "");
@@ -22,7 +22,6 @@
     formData.append('taggedUsers', splitTaggedUser.join(',')); 
     formData.append('hashtags', splitHashtag.join(',')); 
     
-    // ✅ Agregar communityId si existe
     if (communityId) {
       formData.append('communityId', communityId);
     }
@@ -45,7 +44,7 @@
     console.error('Error:', errorData);
     return false;
   } catch (error) {
-    console.error("Error al crear el post:", error);
+    console.error("Error al crear el post");
     return false;
   }
 },
@@ -72,7 +71,6 @@
       }
     },
 
-    // ✅ NUEVO: Obtener detalles de un post
     async getPostById(postId: string, token: string) {
       try {
         const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
@@ -94,7 +92,6 @@
       }
     },
 
-    // ✅ NUEVO: Toggle like
     async toggleLike(postId: string, token: string) {
       try {
         const response = await fetch(`${API_BASE_URL}/posts/${postId}/like`, {
@@ -116,7 +113,6 @@
       }
     },
 
-    // ✅ NUEVO: Toggle dislike
     async toggleDislike(postId: string, token: string) {
       try {
         const response = await fetch(`${API_BASE_URL}/posts/${postId}/dislike`, {
@@ -150,7 +146,7 @@
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Error al eliminar el post');
+      throw new Error('Error al eliminar el post');
     }
 
     return await response.json();
@@ -160,7 +156,6 @@
   }
 },
 
-// ✅ Eliminar post como admin de comunidad
 async deletePostAsAdmin(communityId: string, postId: string, token: string) {
   try {
     const response = await fetch(
@@ -176,12 +171,12 @@ async deletePostAsAdmin(communityId: string, postId: string, token: string) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Error al eliminar el post');
+      throw new Error('Error al eliminar el post');
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error al eliminar post:', error);
+    console.error('Error al eliminar post');
     throw error;
   }
 }

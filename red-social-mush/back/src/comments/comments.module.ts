@@ -13,6 +13,6 @@ import { User, UserSchema } from '../users/schemas/user.schema';
   ],
   controllers: [CommentsController],
   providers: [CommentsService],
-  exports: [CommentsService], // ✅ Exportar para usar en PostsService
+  exports: [CommentsService], 
 })
 export class CommentsModule {}

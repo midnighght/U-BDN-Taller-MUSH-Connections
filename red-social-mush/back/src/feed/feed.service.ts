@@ -16,12 +16,8 @@ export class FeedService {
   async getFeed(userId: string, page: number = 1, limit: number = 10) {
   const skip = (page - 1) * limit;
   const userObjectId = new Types.ObjectId(userId);
-
-  // 1. Obtener amigos
   const friends = await this.friendshipsService.getFriends(userId);
   const friendIdStrings = friends.map(f => f._id.toString());
-
-  // 2. Obtener comunidades del usuario
   const communities = await this.communityModel
     .find({
       $or: [
@@ -42,7 +38,7 @@ export class FeedService {
     ])
   );
 
-  // 3. Query
+ 
   const orConditions: any[] = [
     { authorID: userId },
   ];
@@ -60,7 +56,7 @@ export class FeedService {
 
   const query = { $or: orConditions };
 
-  // 4. Ejecutar query
+  
   const posts = await this.postModel
     .find(query)
     .populate('authorID', 'username userPhoto')
@@ -70,17 +66,16 @@ export class FeedService {
     .lean()
     .exec();
 
-  // ✅ FILTRAR posts sin autor (posts huérfanos)
+ 
   const validPosts = posts.filter((post: any) => post.authorID !== null);
 
-  console.log(`📊 Posts totales: ${posts.length}, Posts válidos: ${validPosts.length}`);
+  console.log(`Posts totales: ${posts.length}, Posts válidos: ${validPosts.length}`);
 
-  // 5. Contar total (solo posts válidos)
-  // Nota: countDocuments no puede verificar populate, así que el conteo puede ser ligeramente inexacto
+  
   const totalPosts = await this.postModel.countDocuments(query);
   const hasMore = skip + validPosts.length < totalPosts;
 
-  // 6. Enriquecer posts con info de comunidad
+ 
   const enrichedPosts = await Promise.all(validPosts.map(async (post: any) => {
     const hasLiked = post.reactionUp?.some((id: Types.ObjectId) => 
       id.toString() === userId
@@ -122,7 +117,7 @@ export class FeedService {
       textBody: post.textBody,
       hashtags: post.hashtags || [],
       createdAt: post.createdAt,
-      authorID: post.authorID, // ✅ Ya validamos que no es null
+      authorID: post.authorID,
       likesCount: post.reactionUp?.length || 0,
       dislikesCount: post.reactionDown?.length || 0,
       hasLiked,

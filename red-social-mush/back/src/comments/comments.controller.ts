@@ -16,7 +16,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guards';
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
-  // ✅ Crear comentario en un post
+ 
   @Post('post/:postId')
   @UseGuards(AuthGuard)
   async createComment(
@@ -33,14 +33,14 @@ export class CommentsController {
     );
   }
 
-  // ✅ Obtener comentarios de un post
+  
   @Get('post/:postId')
   @UseGuards(AuthGuard)
   async getComments(@Param('postId') postId: string) {
     return await this.commentsService.getCommentsByPost(postId);
   }
 
-  // ✅ Eliminar comentario
+  
   @Delete(':commentId')
   @UseGuards(AuthGuard)
   async deleteComment(@Param('commentId') commentId: string, @Request() req) {
@@ -48,7 +48,7 @@ export class CommentsController {
     return await this.commentsService.deleteComment(commentId, userId);
   }
 
-  // ✅ Editar comentario
+  
   @Patch(':commentId')
   @UseGuards(AuthGuard)
   async updateComment(

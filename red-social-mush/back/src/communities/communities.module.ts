@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common'; // ✅ Importar forwardRef
+import { Module, forwardRef } from '@nestjs/common'; 
 import { CommunitiesService } from './communities.service';
 import { CommunitiesController } from './communities.controller';
 import { Community, CommunitySchema } from './schemas/communities.schema';
@@ -18,7 +18,7 @@ import { PostsModule } from 'src/posts/posts.module';
     ]),
     UploadModule,
     CloudinaryModule,
-    forwardRef(() => PostsModule) // ✅ Usar forwardRef
+    forwardRef(() => PostsModule) 
   ],
   providers: [CommunitiesService],
   controllers: [CommunitiesController],

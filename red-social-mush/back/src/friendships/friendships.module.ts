@@ -1,4 +1,3 @@
-// friendships/friendships.module.ts
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { FriendshipsController } from './friendships.controller';

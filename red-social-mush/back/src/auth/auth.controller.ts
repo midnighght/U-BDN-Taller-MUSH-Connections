@@ -57,14 +57,14 @@ export class AuthController {
     }
   }
 
-  // ✅ NUEVO: Solicitar reset de contraseña
+  
   @HttpCode(HttpStatus.OK)
   @Post('forgot-password')
   async forgotPassword(@Body() body: { email: string }) {
     return await this.authService.requestPasswordReset(body.email);
   }
 
-  // ✅ NUEVO: Restablecer contraseña
+ 
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
   async resetPassword(
@@ -80,7 +80,7 @@ export class AuthController {
     const user = await this.authService['userModel'].findById(userId)
       .select('-password');
     const communities = await this.communitiesService.getUserCommunitiesCount(userId);
-    
+     const friendsCount = await this.authService.countFriends(userId);
     if (user != null) {
       return {
         id: user._id,
@@ -92,7 +92,8 @@ export class AuthController {
         isVerified: user.isVerified,
         lastLogin: user.lastLogin,
         createdAt: user.createdAt,
-        communities
+        communities,
+         friends: friendsCount
       };
     }
   }

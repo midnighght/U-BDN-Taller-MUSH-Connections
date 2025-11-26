@@ -1,7 +1,6 @@
 const API_BASE_URL = 'http://localhost:3000';
 
 export const comments_api = {
-  // ✅ Obtener comentarios de un post
   async getCommentsByPost(postId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/comments/post/${postId}`, {
@@ -23,7 +22,6 @@ export const comments_api = {
     }
   },
 
-  // ✅ Crear comentario (con respuesta opcional)
   async createComment(postId: string, textBody: string, token: string, parentCommentID?: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/comments/post/${postId}`, {
@@ -46,7 +44,6 @@ export const comments_api = {
     }
   },
 
-  // ✅ Eliminar comentario
   async deleteComment(commentId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
@@ -68,7 +65,6 @@ export const comments_api = {
     }
   },
 
-  // ✅ Editar comentario
   async updateComment(commentId: string, textBody: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {

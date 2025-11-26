@@ -6,13 +6,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guards';
 export class FeedController {
   constructor(private readonly feedService: FeedService) {}
 
-  /**
-   * GET /feed
-   * Obtener feed personalizado con paginación
-   * Query params:
-   * - page: número de página (default: 1)
-   * - limit: posts por página (default: 10)
-   */
+ 
   @Get()
   @UseGuards(AuthGuard)
   async getFeed(

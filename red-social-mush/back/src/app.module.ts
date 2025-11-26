@@ -6,7 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PostsModule } from './posts/posts.module';
 import { CommunitiesModule } from './communities/communities.module';
-import { CommentsModule } from './comments/comments.module'; // ✅ IMPORTAR
+import { CommentsModule } from './comments/comments.module'; 
 import { ConfigModule } from '@nestjs/config';
 import { UploadModule } from './upload/upload.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
@@ -28,7 +28,6 @@ import { SuggestionsModule } from './suggestions/suggestions.module';
       isGlobal: true,
        envFilePath: '.env',
     }),
-    // Usar variable de entorno con fallback para desarrollo local
     MongooseModule.forRoot(
       process.env.MONGODB_URI || 
       'mongodb://mush:password1234@localhost:38130/redsocial?authSource=admin'
@@ -38,7 +37,7 @@ import { SuggestionsModule } from './suggestions/suggestions.module';
     UsersModule,
     PostsModule,
     CommunitiesModule,
-    CommentsModule, // ✅ ADD THIS LINE
+    CommentsModule, 
     UploadModule,
     CloudinaryModule,
     EmailModule,

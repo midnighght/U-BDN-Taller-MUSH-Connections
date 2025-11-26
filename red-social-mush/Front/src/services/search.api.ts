@@ -4,7 +4,7 @@ interface SearchUser {
   _id: string;
   username: string;
   userPhoto?: string;
-  isPrivate?: boolean; // ✅ NUEVO: indicador de privacidad
+  isPrivate?: boolean; 
   type: 'user';
 }
 
@@ -15,7 +15,7 @@ interface SearchCommunity {
   mediaURL: string;
   hashtags: string[];
   membersCount: number;
-  isPrivate?: boolean; // ✅ NUEVO
+  isPrivate?: boolean; 
   type: 'community';
 }
 
@@ -63,7 +63,7 @@ export const search_api = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error en búsqueda:', error);
+      console.error('Error en búsqueda');
       throw error;
     }
   }

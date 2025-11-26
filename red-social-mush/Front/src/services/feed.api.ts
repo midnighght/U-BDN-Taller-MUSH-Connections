@@ -19,7 +19,7 @@ export interface FeedPost {
   community?: {
     _id: string;
     name: string;
-    mediaURL: string;  // ✅ Cambiado de communityPhoto a mediaURL
+    mediaURL: string;  
   } | null;
 }
 
@@ -34,9 +34,7 @@ export interface FeedResponse {
 }
 
 export const feed_api = {
-  /**
-   * Obtener feed con paginación
-   */
+  
   async getFeed(token: string, page: number = 1, limit: number = 10): Promise<FeedResponse> {
     try {
       console.log(`📥 Cargando feed - página ${page}...`);
@@ -58,10 +56,10 @@ export const feed_api = {
       }
 
       const data = await response.json();
-      console.log(`✅ Feed cargado: ${data.posts.length} posts`);
+      console.log(`Feed cargado: ${data.posts.length} posts`);
       return data;
     } catch (error) {
-      console.error('❌ Error al cargar feed:', error);
+      console.error('Error al cargar feed:', error);
       throw error;
     }
   }

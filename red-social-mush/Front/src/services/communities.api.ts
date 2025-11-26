@@ -75,11 +75,7 @@ export const communities_api = {
     }
   },
 
-  // ✅ NUEVOS ENDPOINTS NECESARIOS
 
-  /**
-   * Obtener detalles de una comunidad específica
-   */
   async getCommunityById(communityId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, {
@@ -101,9 +97,6 @@ export const communities_api = {
     }
   },
 
-  /**
-   * Obtener posts de una comunidad
-   */
   async getCommunityPosts(communityId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/posts`, {
@@ -125,9 +118,6 @@ export const communities_api = {
     }
   },
 
-  /**
-   * Solicitar unirse a una comunidad privada
-   */
  async joinCommunity(communityId: string, token: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/communities/${communityId}/join`, {
@@ -150,9 +140,7 @@ export const communities_api = {
   }
 },
 
-/**
- * Solicitar unirse a una comunidad privada
- */
+
 async requestJoin(communityId: string, token: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/communities/${communityId}/request-join`, {
@@ -175,9 +163,7 @@ async requestJoin(communityId: string, token: string) {
   }
 },
 
-  /**
-   * Obtener solicitudes pendientes (solo admin/superAdmin)
-   */
+
   async getPendingRequests(communityId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/pending-requests`, {
@@ -199,9 +185,7 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
-   * Aceptar solicitud de unión
-   */
+
   async acceptRequest(communityId: string, userId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/accept-request`, {
@@ -225,9 +209,7 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
-   * Rechazar solicitud de unión
-   */
+
   async rejectRequest(communityId: string, userId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/reject-request`, {
@@ -251,9 +233,7 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
-   * Eliminar miembro (admin/superAdmin)
-   */
+
   async removeMember(communityId: string, userId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/remove-member`, {
@@ -277,9 +257,7 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
-   * Ascender a admin (solo superAdmin)
-   */
+  
   async promoteToAdmin(communityId: string, userId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/promote-admin`, {
@@ -303,9 +281,7 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
-   * Degradar de admin a member (solo superAdmin)
-   */
+
   async demoteFromAdmin(communityId: string, userId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/demote-admin`, {
@@ -329,9 +305,6 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
-   * Transferir propiedad (solo superAdmin)
-   */
   async transferOwnership(communityId: string, newOwnerId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/transfer-ownership`, {
@@ -355,9 +328,6 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
-   * Eliminar comunidad (solo superAdmin)
-   */
   async deleteCommunity(communityId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, {
@@ -380,9 +350,6 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
-   * Obtener miembros de la comunidad
-   */
   async getCommunityMembers(communityId: string, token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/members`, {
@@ -404,9 +371,6 @@ async requestJoin(communityId: string, token: string) {
     }
   },
 
-  /**
- * Actualizar foto de la comunidad (solo superAdmin)
- */
 async updateCommunityPhoto(communityId: string, imageBase64: string, token: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/communities/${communityId}/photo`, {
@@ -430,9 +394,6 @@ async updateCommunityPhoto(communityId: string, imageBase64: string, token: stri
   }
 },
 
-/**
- * Actualizar descripción de la comunidad (solo superAdmin)
- */
 async updateCommunityDescription(communityId: string, description: string, token: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/communities/${communityId}/description`, {
@@ -456,9 +417,7 @@ async updateCommunityDescription(communityId: string, description: string, token
   }
 },
 
-/**
- * Actualizar hashtags de la comunidad (solo superAdmin)
- */
+
 async updateCommunityHashtags(communityId: string, hashtags: string[], token: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/communities/${communityId}/hashtags`, {
@@ -482,9 +441,7 @@ async updateCommunityHashtags(communityId: string, hashtags: string[], token: st
   }
 },
 
-/**
- * Cambiar privacidad de la comunidad (solo superAdmin)
- */
+
 async updateCommunityPrivacy(communityId: string, isPrivate: boolean, token: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/communities/${communityId}/privacy`, {

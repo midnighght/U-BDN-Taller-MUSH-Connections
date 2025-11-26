@@ -1,4 +1,3 @@
-// requests/requests.module.ts
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RequestsController } from './requests.controller';
@@ -15,7 +14,7 @@ import { Neo4jModule } from 'src/neo4j/neo4j.module';
   imports: [
     MongooseModule.forFeature([
       { name: Request.name, schema: RequestSchema },
-      { name: Friendship.name, schema: FriendshipSchema }, // ✅ AGREGAR
+      { name: Friendship.name, schema: FriendshipSchema }, 
     ]),
     NotificationsModule,
     Neo4jModule,

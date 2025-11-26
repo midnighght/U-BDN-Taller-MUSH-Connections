@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
-// Definimos el tipo de usuario
 interface User {
   id: string;
   email: string;
@@ -18,35 +17,31 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Verificar si hay sesión guardada al cargar la página
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('auth_token');
       
-      // Si NO hay token, no hacer nada
       if (!token) {
-        console.log('ℹ️ No hay token guardado');
+        console.log('ℹNo hay token guardado');
         setLoading(false);
         return;
       }
 
-      // Si hay token, verificar que sea válido
       try {
-        console.log('🔍 Token encontrado, verificando...');
+        console.log('Token encontrado, verificando...');
         const response = await api.obtainUserData(token);
         
         if (response) {
-          console.log('✅ Token válido. Usuario:', response.username);
+          console.log('Token válido. Usuario:', response.username);
           setUser(response);
 
         } else {
-          // Token inválido o expirado
-          console.warn('⚠️ Token inválido, limpiando localStorage');
+          
           localStorage.removeItem('auth_token');
           setUser(null);
         }
       } catch (err: any) {
-        console.error('❌ Error al verificar autenticación:', err);
+        console.error('Error al verificar autenticación:', err);
         localStorage.removeItem('auth_token');
         setError(err.message);
         setUser(null);
@@ -65,12 +60,10 @@ export const useAuth = () => {
     try {
       const result = await api.login(email, password);
       
-      // Guardar el token
       if (result.access_token) {
         localStorage.setItem('auth_token', result.access_token);
       }
       
-      // Guardar el usuario
       setUser(result);
       
       return { success: true, data: result };
@@ -83,7 +76,6 @@ export const useAuth = () => {
     }
   };
 
-  // Actualizar la función register para aceptar los nuevos campos
 const register = async (
   email: string,
   password: string,

@@ -29,7 +29,7 @@ export const api = {
       
     } catch (error: any) {
       console.log('Error en login:', error.message);
-      throw new Error('Error en login: ' + error.message);
+      throw new Error('Error o credenciales incorrectas' );
     }
   },
 
@@ -49,7 +49,6 @@ export const api = {
       throw new Error(`HTTP ${result.status}: ${errorMessage}`);
     }
 
-    // Handle successful response
 
   } catch (error) {
     console.error("Error al registrar el usuario:", error);
@@ -69,7 +68,6 @@ export const api = {
         },
       });
 
-      // Si el token es inválido o expiró
       if (response.status === 401) {
        
         return null;
@@ -79,7 +77,6 @@ export const api = {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Verificar que hay contenido antes de parsear
       const text = await response.text();
       if (!text || text.trim() === '') {
         console.warn('Respuesta vacía del servidor');

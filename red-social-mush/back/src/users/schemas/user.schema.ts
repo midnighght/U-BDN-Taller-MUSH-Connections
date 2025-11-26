@@ -44,7 +44,7 @@ export class User {
   @Prop({ required: false })
   verificationTokenExpires?: Date;
 
-  // ✅ NUEVO: Para reset de contraseña
+ 
   @Prop({required: false})
   resetPasswordToken?: string;
 

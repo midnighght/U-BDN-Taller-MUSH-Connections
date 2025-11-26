@@ -51,10 +51,8 @@ export class PostsController {
     try {
       const userId = req.user.userId;
 
-      // ✅ Verificar si se está creando en una comunidad
       const communityId = body.communityId;
 
-      // Subir imagen a Cloudinary
       const imageUrl = await this.uploadService.uploadImageToCloudinary(file);
 
       const taggedUsersArray = body.taggedUsers
@@ -73,7 +71,6 @@ export class PostsController {
         userId: userId,
       };
 
-      // ✅ Pasar communityId al servicio
       const result = await this.postsService.createPostInDb(
         createPostDto,
         communityId,
@@ -102,7 +99,6 @@ export class PostsController {
     return postsData;
   }
 
-  // ✅ Obtener un post individual con detalles
   @Get(':id')
   @UseGuards(AuthGuard)
   async getPostById(@Param('id') postId: string, @Request() req) {
@@ -110,7 +106,6 @@ export class PostsController {
     return await this.postsService.getPostWithDetails(postId, userId);
   }
 
-  // ✅ Like a un post
   @Post(':id/like')
   @UseGuards(AuthGuard)
   async likePost(@Param('id') postId: string, @Request() req) {
@@ -118,7 +113,6 @@ export class PostsController {
     return await this.postsService.toggleLike(postId, userId);
   }
 
-  // ✅ Dislike a un post
   @Post(':id/dislike')
   @UseGuards(AuthGuard)
   async dislikePost(@Param('id') postId: string, @Request() req) {
@@ -126,7 +120,6 @@ export class PostsController {
     return await this.postsService.toggleDislike(postId, userId);
   }
 
-  // ✅ Eliminar post propio
   @Delete(':id')
   @UseGuards(AuthGuard)
   async deletePost(@Param('id') postId: string, @Request() req) {

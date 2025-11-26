@@ -18,7 +18,6 @@ export class Community {
   @Prop({ type: Boolean, default: false })
   isPrivate: boolean;
 
-  // ✅ CAMBIO IMPORTANTE: superAdminID debe ser un ObjectId único, NO un array
   @Prop({ type: Types.ObjectId, required: true })
   superAdminID: Types.ObjectId;
 

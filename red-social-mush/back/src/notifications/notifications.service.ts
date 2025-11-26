@@ -16,12 +16,12 @@ export class NotificationsService {
   constructor(
     @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
   ) {
-    console.log('✅ NotificationsService inicializado');
+    
   }
 
-  // ✅ Crear notificación con manejo robusto de errores
+ 
   async createNotification(dto: CreateNotificationDto) {
-    console.log('🔔 [NotificationsService] Creando notificación');
+    console.log(' [NotificationsService] Creando notificación');
     console.log('   recipientID:', dto.recipientID, '(tipo:', typeof dto.recipientID, ')');
     console.log('   senderID:', dto.senderID, '(tipo:', typeof dto.senderID, ')');
     console.log('   type:', dto.type);
@@ -29,7 +29,6 @@ export class NotificationsService {
     console.log('   relatedID:', dto.relatedID);
 
     try {
-      // Validar que los IDs sean válidos
       if (!Types.ObjectId.isValid(dto.recipientID)) {
         throw new BadRequestException(`recipientID inválido: ${dto.recipientID}`);
       }
@@ -48,7 +47,6 @@ export class NotificationsService {
         isRead: false,
       };
 
-      // Solo agregar relatedID si existe
       if (dto.relatedID) {
         notificationData.relatedID = new Types.ObjectId(dto.relatedID);
       }
@@ -61,7 +59,7 @@ export class NotificationsService {
 
       const saved = await notification.save();
       
-      console.log('✅ Notificación guardada exitosamente');
+      console.log('Notificación guardada exitosamente');
       console.log('   _id:', saved._id);
       console.log('   recipientID:', saved.recipientID);
       console.log('   senderID:', saved.senderID);
@@ -70,17 +68,15 @@ export class NotificationsService {
 
       return saved;
     } catch (error) {
-      console.error('❌ ERROR COMPLETO al guardar notificación:');
+      console.error(' ERROR COMPLETO al guardar notificación:');
       console.error('   Mensaje:', error.message);
       console.error('   Stack:', error.stack);
       console.error('   Error completo:', error);
-      throw error;
+      throw new Error('Error al guardar los datos');
     }
   }
 
-  // ✅ Obtener notificaciones del usuario (con paginación)
   async getNotifications(userId: string, page: number = 1, limit: number = 20) {
-    console.log('📋 [getNotifications] userId:', userId, 'page:', page, 'limit:', limit);
     
     const skip = (page - 1) * limit;
 
@@ -121,16 +117,11 @@ export class NotificationsService {
     };
   }
 
-  // ✅ Obtener solo notificaciones no leídas
   async getUnreadNotifications(userId: string) {
-    console.log('📥 [getUnreadNotifications] userId:', userId);
-    console.log('   Tipo de userId:', typeof userId);
-    console.log('   Es ObjectId válido?:', Types.ObjectId.isValid(userId));
-
-    // Asegurar que userId sea ObjectId
+  
     const userObjectId = new Types.ObjectId(userId);
     
-    console.log('   Buscando con ObjectId:', userObjectId);
+    console.log('Buscando con ObjectId:', userObjectId);
 
     const notifications = await this.notificationModel
       .find({ recipientID: userObjectId, isRead: false })
@@ -140,7 +131,7 @@ export class NotificationsService {
       .lean()
       .exec();
 
-    console.log('   Notificaciones encontradas:', notifications.length);
+    console.log('Notificaciones encontradas:', notifications.length);
     
     if (notifications.length > 0) {
       console.log('   Primera notificación:', {
@@ -166,7 +157,7 @@ export class NotificationsService {
     }));
   }
 
-  // ✅ Marcar notificación como leída
+ 
   async markAsRead(notificationId: string, userId: string) {
     const notification = await this.notificationModel.findById(notificationId);
 
@@ -184,19 +175,17 @@ export class NotificationsService {
     return { success: true, message: 'Notificación marcada como leída' };
   }
 
-  // ✅ Marcar todas como leídas
   async markAllAsRead(userId: string) {
     const result = await this.notificationModel.updateMany(
       { recipientID: userId, isRead: false },
       { $set: { isRead: true } }
     );
 
-    console.log(`✅ Marcadas como leídas: ${result.modifiedCount} notificaciones`);
+    console.log(`Marcadas como leídas: ${result.modifiedCount} notificaciones`);
 
     return { success: true, message: 'Todas las notificaciones fueron marcadas como leídas' };
   }
 
-  // ✅ Eliminar notificación
   async deleteNotification(notificationId: string, userId: string) {
     const notification = await this.notificationModel.findById(notificationId);
 
@@ -213,15 +202,12 @@ export class NotificationsService {
     return { success: true, message: 'Notificación eliminada' };
   }
 
-  // ✅ Eliminar todas las notificaciones
   async deleteAllNotifications(userId: string) {
     await this.notificationModel.deleteMany({ recipientID: userId });
     return { success: true, message: 'Todas las notificaciones fueron eliminadas' };
   }
 
-  // ✅ Contar notificaciones no leídas
   async getUnreadCount(userId: string): Promise<number> {
-    console.log('📊 [getUnreadCount] userId:', userId);
     
     const userObjectId = new Types.ObjectId(userId);
     
@@ -234,7 +220,6 @@ export class NotificationsService {
     return count;
   }
 
-  // ✅ Eliminar notificaciones antiguas (más de 30 días)
   async deleteOldNotifications() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -251,22 +236,20 @@ export class NotificationsService {
     };
   }
 
-  // ✅ MÉTODO DE DEBUG - Eliminar después de testear
   async debugGetAllNotifications() {
     const all = await this.notificationModel.find().lean();
-    console.log('🔍 Total de notificaciones en DB:', all.length);
+    console.log('Total de notificaciones en DB:', all.length);
     return all;
   }
 
-  // ✅ Eliminar notificación por relatedID (cuando se procesa una solicitud)
 async deleteNotificationByRelatedId(relatedId: string) {
-  console.log('🗑️ Eliminando notificación con relatedID:', relatedId);
+  console.log('Eliminando notificación con relatedID:', relatedId);
   
   const result = await this.notificationModel.deleteMany({
     relatedID: new Types.ObjectId(relatedId),
   });
 
-  console.log(`✅ Notificaciones eliminadas: ${result.deletedCount}`);
+  console.log(`Notificaciones eliminadas: ${result.deletedCount}`);
   return { success: true, deletedCount: result.deletedCount };
 }
 }

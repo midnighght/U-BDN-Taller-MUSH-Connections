@@ -12,10 +12,10 @@ export enum FriendshipStatus {
 @Schema({ timestamps: true })
 export class Friendship {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  requesterID: Types.ObjectId; // Quien envió la solicitud
+  requesterID: Types.ObjectId; 
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  recipientID: Types.ObjectId; // Quien recibe la solicitud
+  recipientID: Types.ObjectId; 
 
   @Prop({ 
     type: String, 
@@ -33,5 +33,4 @@ export class Friendship {
 
 export const FriendshipSchema = SchemaFactory.createForClass(Friendship);
 
-// Crear índice compuesto para búsquedas eficientes
 FriendshipSchema.index({ requesterID: 1, recipientID: 1 }, { unique: true });

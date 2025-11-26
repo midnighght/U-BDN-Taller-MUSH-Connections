@@ -1,4 +1,3 @@
-// requests/requests.service.ts
 import {
   Injectable,
   BadRequestException,
@@ -28,12 +27,11 @@ export class RequestsService {
     @InjectModel(Friendship.name)
     private friendshipModel: Model<FriendshipDocument>,
     private notificationsService: NotificationsService,
-    private neo4jService: Neo4jService, // ✅ Inyectar Neo4jService
+    private neo4jService: Neo4jService, 
   ) {}
 
-  // ✅ Crear solicitud de amistad
   async createFriendRequest(requesterId: string, recipientId: string) {
-    console.log('📤 Creando solicitud de amistad');
+    console.log('Creando solicitud de amistad');
     console.log('   De:', requesterId);
     console.log('   Para:', recipientId);
 
@@ -46,7 +44,6 @@ export class RequestsService {
     const requesterObjectId = new Types.ObjectId(requesterId);
     const recipientObjectId = new Types.ObjectId(recipientId);
 
-    // ✅ Verificar si ya son amigos (en Friendships)
     const existingFriendship = await this.friendshipModel.findOne({
       $or: [
         {
@@ -66,7 +63,6 @@ export class RequestsService {
       throw new BadRequestException('Ya son amigos');
     }
 
-    // ✅ Verificar si ya existe una solicitud pendiente (en cualquier dirección)
     const existingRequest = await this.requestModel.findOne({
       $or: [
         { requesterID: requesterObjectId, recipientID: recipientObjectId },
@@ -80,7 +76,6 @@ export class RequestsService {
       throw new BadRequestException('Ya existe una solicitud pendiente');
     }
 
-    // ✅ Crear la solicitud en MongoDB
     const request = new this.requestModel({
       requesterID: requesterObjectId,
       recipientID: recipientObjectId,
@@ -90,15 +85,12 @@ export class RequestsService {
 
     await request.save();
 
-    // ✅ Sincronizar con Neo4j
     try {
       await this.neo4jService.createFriendRequest(requesterId, recipientId);
     } catch (error) {
-      console.error('⚠️ Error sincronizando solicitud con Neo4j:', error);
-      // No lanzar error - MongoDB es la fuente de verdad
+      console.error('Error sincronizando solicitud con Neo4j:', error);
     }
 
-    // ✅ Crear notificación
     await this.notificationsService.createNotification({
       recipientID: recipientId,
       senderID: requesterId,
@@ -107,7 +99,7 @@ export class RequestsService {
       relatedID: (request._id as Types.ObjectId).toString(),
     });
 
-    console.log('✅ Solicitud de amistad creada:', request._id);
+    console.log('Solicitud de amistad creada:', request._id);
     return {
       success: true,
       message: 'Solicitud enviada',
@@ -115,9 +107,8 @@ export class RequestsService {
     };
   }
 
-  // ✅ Aceptar solicitud
   async acceptRequest(requestId: string, approverId: string) {
-    console.log('✅ Aceptando solicitud:', requestId);
+    console.log('Aceptando solicitud:', requestId);
 
     const request = await this.requestModel.findById(requestId);
 
@@ -129,7 +120,6 @@ export class RequestsService {
       throw new BadRequestException('Esta solicitud ya fue procesada');
     }
 
-    // Verificar permisos según el tipo
     if (request.type === RequestType.FRIEND_REQUEST) {
       if (request.recipientID?.toString() !== approverId) {
         throw new BadRequestException('No puedes aceptar esta solicitud');
@@ -138,7 +128,6 @@ export class RequestsService {
       const requesterIdStr = request.requesterID.toString();
       const recipientIdStr = request.recipientID.toString();
 
-      // ✅ Crear Friendship en MongoDB
       const friendship = new this.friendshipModel({
         requesterID: request.requesterID,
         recipientID: request.recipientID,
@@ -146,9 +135,8 @@ export class RequestsService {
       });
       await friendship.save();
 
-      console.log('✅ Friendship creada en MongoDB:', friendship._id);
+      console.log('Friendship creada en MongoDB:', friendship._id);
 
-      // ✅ Sincronizar con Neo4j: Eliminar solicitud y crear amistad
       try {
         await this.neo4jService.removeFriendRequest(
           requesterIdStr,
@@ -159,11 +147,9 @@ export class RequestsService {
           recipientIdStr,
         );
       } catch (error) {
-        console.error('⚠️ Error sincronizando aceptación con Neo4j:', error);
-        // No lanzar error - MongoDB es la fuente de verdad
+        console.error('Error sincronizando aceptación con Neo4j:', error);
       }
 
-      // ✅ Crear notificación de aceptación
       await this.notificationsService.createNotification({
         recipientID: request.requesterID.toString(),
         senderID: approverId,
@@ -172,23 +158,20 @@ export class RequestsService {
       });
     }
 
-    // ✅ Eliminar la solicitud (ya no es necesaria)
     await this.requestModel.findByIdAndDelete(requestId);
 
-    // ✅ Eliminar la notificación asociada
     try {
       await this.notificationsService.deleteNotificationByRelatedId(requestId);
     } catch (error) {
       console.error('Error eliminando notificación:', error);
     }
 
-    console.log('✅ Solicitud aceptada y procesada');
+    console.log('Solicitud aceptada y procesada');
     return { success: true, message: 'Solicitud aceptada' };
   }
 
-  // ✅ Rechazar solicitud
   async rejectRequest(requestId: string, approverId: string) {
-    console.log('❌ Rechazando solicitud:', requestId);
+    console.log('Rechazando solicitud:', requestId);
 
     const request = await this.requestModel.findById(requestId);
 
@@ -200,40 +183,35 @@ export class RequestsService {
       throw new BadRequestException('Esta solicitud ya fue procesada');
     }
 
-    // Verificar permisos según el tipo
     if (request.type === RequestType.FRIEND_REQUEST) {
       if (request.recipientID?.toString() !== approverId) {
         throw new BadRequestException('No puedes rechazar esta solicitud');
       }
 
-      // ✅ Sincronizar con Neo4j
       try {
         await this.neo4jService.removeFriendRequest(
           request.requesterID.toString(),
           request.recipientID.toString(),
         );
       } catch (error) {
-        console.error('⚠️ Error sincronizando rechazo con Neo4j:', error);
+        console.error('Error sincronizando rechazo con Neo4j:', error);
       }
     }
 
-    // Eliminar la solicitud
     await this.requestModel.findByIdAndDelete(requestId);
 
-    // ✅ Eliminar la notificación asociada
     try {
       await this.notificationsService.deleteNotificationByRelatedId(requestId);
     } catch (error) {
       console.error('Error eliminando notificación:', error);
     }
 
-    console.log('✅ Solicitud rechazada y eliminada');
+    console.log('Solicitud rechazada y eliminada');
     return { success: true, message: 'Solicitud rechazada' };
   }
 
-  // ✅ Obtener solicitudes pendientes de un usuario (amistades)
   async getUserPendingRequests(userId: string) {
-    console.log('📥 Obteniendo solicitudes pendientes para:', userId);
+    console.log('Obteniendo solicitudes pendientes para:', userId);
 
     const requests = await this.requestModel
       .find({
@@ -246,7 +224,7 @@ export class RequestsService {
       .lean()
       .exec();
 
-    console.log('✅ Solicitudes encontradas:', requests.length);
+    console.log('Solicitudes encontradas:', requests.length);
 
     return requests.map((req: any) => ({
       _id: req._id,
@@ -260,9 +238,8 @@ export class RequestsService {
     }));
   }
 
-  // ✅ Verificar estado de solicitud entre dos usuarios
   async getFriendRequestStatus(userId: string, otherUserId: string) {
-    console.log('🔍 Verificando solicitud entre:', userId, 'y', otherUserId);
+    console.log('Verificando solicitud entre:', userId, 'y', otherUserId);
 
     const userObjectId = new Types.ObjectId(userId);
     const otherUserObjectId = new Types.ObjectId(otherUserId);
@@ -279,7 +256,7 @@ export class RequestsService {
       .lean()
       .exec();
 
-    console.log('🔍 Solicitud encontrada:', request ? 'SÍ' : 'NO');
+    console.log('Solicitud encontrada:', request ? 'SÍ' : 'NO');
 
     if (!request) {
       const friendship = await this.friendshipModel
@@ -301,18 +278,18 @@ export class RequestsService {
         .exec();
 
       if (friendship) {
-        console.log('✅ Ya son amigos');
+        console.log('Ya son amigos');
         return { status: 'friends', canSendRequest: false };
       }
 
-      console.log('❌ No hay solicitud ni amistad');
+      console.log('No hay solicitud ni amistad');
       return { status: 'none', canSendRequest: true };
     }
 
     const isSender = request.requesterID.toString() === userId;
     const requestId = request._id.toString();
 
-    console.log('📋 Estado de solicitud:', {
+    console.log(' Estado de solicitud:', {
       status: 'pending',
       isSender,
       requestId,
@@ -329,9 +306,8 @@ export class RequestsService {
     };
   }
 
-  // ✅ Obtener solicitudes de unión a comunidad (para admins)
   async getCommunityPendingRequests(communityId: string, userId: string) {
-    console.log('🏠 Obteniendo solicitudes para comunidad:', communityId);
+    console.log('Obteniendo solicitudes para comunidad:', communityId);
 
     const requests = await this.requestModel
       .find({
@@ -344,7 +320,7 @@ export class RequestsService {
       .lean()
       .exec();
 
-    console.log('✅ Solicitudes de comunidad encontradas:', requests.length);
+    console.log('Solicitudes de comunidad encontradas:', requests.length);
 
     return requests.map((req: any) => ({
       _id: req._id,
@@ -360,13 +336,12 @@ export class RequestsService {
     }));
   }
 
-  // ✅ Crear solicitud para unirse a comunidad
   async createCommunityJoinRequest(
     requesterId: string,
     communityId: string,
     message?: string,
   ) {
-    console.log('🏠 Creando solicitud para unirse a comunidad');
+    console.log('Creando solicitud para unirse a comunidad');
     console.log('   Usuario:', requesterId);
     console.log('   Comunidad:', communityId);
 
@@ -393,7 +368,7 @@ export class RequestsService {
 
     await request.save();
 
-    console.log('✅ Solicitud de comunidad creada:', request._id);
+    console.log('Solicitud de comunidad creada:', request._id);
     return {
       success: true,
       message: 'Solicitud enviada',
@@ -401,9 +376,8 @@ export class RequestsService {
     };
   }
 
-  // ✅ Cancelar solicitud enviada
   async cancelRequest(requestId: string, requesterId: string) {
-    console.log('🚫 Cancelando solicitud:', requestId);
+    console.log('Cancelando solicitud:', requestId);
 
     const request = await this.requestModel.findById(requestId);
 
@@ -419,7 +393,6 @@ export class RequestsService {
       throw new BadRequestException('No puedes cancelar esta solicitud');
     }
 
-    // ✅ Sincronizar con Neo4j
     if (request.type === RequestType.FRIEND_REQUEST) {
       try {
         await this.neo4jService.removeFriendRequest(
@@ -427,27 +400,24 @@ export class RequestsService {
           request.recipientID?.toString() || '',
         );
       } catch (error) {
-        console.error('⚠️ Error sincronizando cancelación con Neo4j:', error);
+        console.error('Error sincronizando cancelación con Neo4j:', error);
       }
     }
 
-    // Eliminar la solicitud
     await this.requestModel.findByIdAndDelete(requestId);
 
-    // ✅ Eliminar la notificación asociada
     try {
       await this.notificationsService.deleteNotificationByRelatedId(requestId);
     } catch (error) {
       console.error('Error eliminando notificación:', error);
     }
 
-    console.log('✅ Solicitud cancelada');
+    console.log('Solicitud cancelada');
     return { success: true, message: 'Solicitud cancelada' };
   }
 
-  // ✅ Obtener solicitudes ENVIADAS por el usuario
   async getSentRequests(userId: string) {
-    console.log('📤 Obteniendo solicitudes enviadas por:', userId);
+    console.log('Obteniendo solicitudes enviadas por:', userId);
 
     const requests = await this.requestModel
       .find({
@@ -460,7 +430,7 @@ export class RequestsService {
       .lean()
       .exec();
 
-    console.log('✅ Solicitudes enviadas encontradas:', requests.length);
+    console.log('Solicitudes enviadas encontradas:', requests.length);
 
     return requests.map((req: any) => ({
       _id: req._id,

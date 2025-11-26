@@ -9,7 +9,7 @@ export class BlocksService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
-  // ✅ Bloquear usuario
+  
   async blockUser(blockerId: string, blockedId: string) {
     if (blockerId === blockedId) {
       throw new BadRequestException('No puedes bloquearte a ti mismo');
@@ -23,12 +23,12 @@ export class BlocksService {
 
     const blockedObjectId = new Types.ObjectId(blockedId);
 
-    // Verificar si ya está bloqueado
+    
     if (blocker.blockedUsers?.some(id => id.toString() === blockedId)) {
       throw new ConflictException('Este usuario ya está bloqueado');
     }
 
-    // Agregar a la lista de bloqueados
+   
     await this.userModel.findByIdAndUpdate(blockerId, {
       $push: { blockedUsers: blockedObjectId }
     });
@@ -36,7 +36,7 @@ export class BlocksService {
     return { success: true, message: 'Usuario bloqueado exitosamente' };
   }
 
-  // ✅ Desbloquear usuario
+  
   async unblockUser(blockerId: string, blockedId: string) {
     const blocker = await this.userModel.findById(blockerId);
     
@@ -46,12 +46,12 @@ export class BlocksService {
 
     const blockedObjectId = new Types.ObjectId(blockedId);
 
-    // Verificar si está en la lista
+    
     if (!blocker.blockedUsers?.some(id => id.toString() === blockedId)) {
       throw new BadRequestException('Este usuario no está bloqueado');
     }
 
-    // Remover de la lista
+    
     await this.userModel.findByIdAndUpdate(blockerId, {
       $pull: { blockedUsers: blockedObjectId }
     });
@@ -59,7 +59,7 @@ export class BlocksService {
     return { success: true, message: 'Usuario desbloqueado exitosamente' };
   }
 
-  // ✅ Obtener lista de usuarios bloqueados
+  
   async getBlockedUsers(userId: string) {
     const user = await this.userModel
       .findById(userId)
@@ -78,7 +78,7 @@ export class BlocksService {
     }));
   }
 
-  // ✅ Verificar si un usuario está bloqueado
+  
   async isUserBlocked(blockerId: string, blockedId: string): Promise<boolean> {
     const blocker = await this.userModel
       .findById(blockerId)
@@ -93,7 +93,7 @@ export class BlocksService {
     return blocker.blockedUsers.some(id => id.toString() === blockedId);
   }
 
-  // ✅ Verificar bloqueo mutuo
+  
   async checkBlockStatus(userId1: string, userId2: string) {
     const [user1, user2] = await Promise.all([
       this.userModel.findById(userId1).select('blockedUsers').lean().exec(),
@@ -110,7 +110,7 @@ export class BlocksService {
     };
   }
 
-  // ✅ Obtener IDs de usuarios bloqueados (útil para filtrar posts/comentarios)
+  
   async getBlockedUserIds(userId: string): Promise<string[]> {
     const user = await this.userModel
       .findById(userId)
@@ -121,7 +121,7 @@ export class BlocksService {
     return user?.blockedUsers?.map(id => id.toString()) || [];
   }
 
-  // ✅ Obtener IDs de usuarios que me bloquearon
+  
   async getUsersWhoBlockedMe(userId: string): Promise<string[]> {
     const usersWhoBlockedMe = await this.userModel
       .find({ blockedUsers: userId })

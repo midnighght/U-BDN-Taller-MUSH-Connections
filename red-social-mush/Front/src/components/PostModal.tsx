@@ -1,7 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
-import { posts_api } from '../services/posts.api';
-import { comments_api } from '../services/comments.api';
-import { useAuth } from '../hooks/useAuth';
+import { useState, useEffect, useRef } from "react";
+import { posts_api } from "../services/posts.api";
+import { comments_api } from "../services/comments.api";
+import { useAuth } from "../hooks/useAuth";
+import {
+  Heart,
+  ThumbsDown,
+  MessageSquare,
+  Trash2,
+  X,
+  Send,
+  CornerDownRight,
+  Loader2,
+  Clock,
+  User,
+  UserMinus,
+  Camera,
+} from "lucide-react";
 
 interface Author {
   _id: string;
@@ -40,30 +54,34 @@ interface PostModalProps {
   isAdmin?: boolean;
 }
 
-const PostModal: React.FC<PostModalProps> = ({ 
-  postId, 
-  onClose, 
+const PostModal: React.FC<PostModalProps> = ({
+  postId,
+  onClose,
   onPostDeleted,
   communityId,
-  isAdmin = false 
+  isAdmin = false,
 }) => {
   const { user } = useAuth();
   const [post, setPost] = useState<PostDetails | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
+  const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{
+    id: string;
+    username: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(
+    new Set()
+  );
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const token = localStorage.getItem('auth_token');
+  const token = localStorage.getItem("auth_token");
 
-  // Helper para obtener datos del autor (puede venir como string u objeto)
   const getAuthorData = (author: Author | string | undefined): Author => {
-    if (!author) return { _id: '', username: 'Usuario', userPhoto: '' };
-    if (typeof author === 'string') {
-      return { _id: author, username: 'Usuario', userPhoto: '' };
+    if (!author) return { _id: "", username: "Usuario", userPhoto: "" };
+    if (typeof author === "string") {
+      return { _id: author, username: "Usuario", userPhoto: "" };
     }
     return author;
   };
@@ -83,10 +101,9 @@ const PostModal: React.FC<PostModalProps> = ({
     if (!token) return;
     try {
       const data = await posts_api.getPostById(postId, token);
-      console.log('📸 Post cargado:', data);
       setPost(data);
     } catch (error) {
-      console.error('Error cargando post:', error);
+      console.error("Error cargando post:", error);
     } finally {
       setLoading(false);
     }
@@ -96,27 +113,22 @@ const PostModal: React.FC<PostModalProps> = ({
     if (!token) return;
     try {
       const data = await comments_api.getCommentsByPost(postId, token);
-      console.log('💬 Comentarios cargados (raw):', JSON.stringify(data, null, 2));
-      
       const normalizeComment = (comment: any): Comment => ({
         _id: comment._id,
         textBody: comment.textBody,
         authorID: getAuthorData(comment.authorID),
         createdAt: comment.createdAt,
         isEdited: comment.isEdited || false,
-        replies: Array.isArray(comment.replies) 
-          ? comment.replies.map(normalizeComment) 
+        replies: Array.isArray(comment.replies)
+          ? comment.replies.map(normalizeComment)
           : [],
       });
-      
-      const normalizedComments = Array.isArray(data) 
-        ? data.map(normalizeComment) 
+      const normalizedComments = Array.isArray(data)
+        ? data.map(normalizeComment)
         : [];
-      
-      console.log('💬 Comentarios normalizados:', normalizedComments);
       setComments(normalizedComments);
     } catch (error) {
-      console.error('Error cargando comentarios:', error);
+      console.error("Error cargando comentarios:", error);
       setComments([]);
     }
   };
@@ -127,7 +139,7 @@ const PostModal: React.FC<PostModalProps> = ({
       await posts_api.toggleLike(postId, token);
       fetchPostDetails();
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
@@ -137,7 +149,7 @@ const PostModal: React.FC<PostModalProps> = ({
       await posts_api.toggleDislike(postId, token);
       fetchPostDetails();
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
@@ -145,69 +157,67 @@ const PostModal: React.FC<PostModalProps> = ({
     if (!token || !newComment.trim()) return;
     try {
       if (replyingTo) {
-        await comments_api.createComment(postId, newComment, token, replyingTo.id);
-        setExpandedReplies(prev => new Set([...prev, replyingTo.id]));
+        await comments_api.createComment(
+          postId,
+          newComment,
+          token,
+          replyingTo.id
+        );
+        setExpandedReplies((prev) => new Set([...prev, replyingTo.id]));
       } else {
         await comments_api.createComment(postId, newComment, token);
       }
-      setNewComment('');
+      setNewComment("");
       setReplyingTo(null);
       fetchComments();
       fetchPostDetails();
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
   const handleDeleteComment = async (commentId: string) => {
     if (!token) return;
-    if (!confirm('¿Eliminar comentario?')) return;
+    if (!confirm("¿Eliminar comentario?")) return;
     try {
       await comments_api.deleteComment(commentId, token);
       fetchComments();
       fetchPostDetails();
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
-  // ✅ NUEVA función para eliminar post
   const handleDeletePost = async () => {
     if (!token || !post) return;
-    
     const confirmDelete = window.confirm(
-      '¿Estás seguro de que quieres eliminar este post? Esta acción no se puede deshacer.'
+      "¿Estás seguro de que quieres eliminar este post? Esta acción no se puede deshacer."
     );
-    
     if (!confirmDelete) return;
 
     try {
       const postAuthor = getAuthorData(post.authorID);
       const isOwner = postAuthor._id === user?.id;
 
-      // Si es admin de comunidad y no es el autor
       if (isAdmin && !isOwner && communityId) {
         await posts_api.deletePostAsAdmin(communityId, postId, token);
       } else {
-        // Usuario eliminando su propio post
         await posts_api.deletePost(postId, token);
       }
 
-      alert('Post eliminado exitosamente');
+      alert("Post eliminado exitosamente");
       onClose();
-      
-      // Callback para actualizar la lista de posts
       if (onPostDeleted) {
         onPostDeleted();
       }
     } catch (error) {
-      console.error('Error al eliminar post:', error);
-      alert('No se pudo eliminar el post. Intenta de nuevo.');
+      console.error("Error al eliminar post:", error);
+      alert("No se pudo eliminar el post. Intenta de nuevo.");
     }
   };
 
   const toggleReplies = (commentId: string) => {
-    setExpandedReplies(prev => {
+    setExpandedReplies((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(commentId)) {
         newSet.delete(commentId);
@@ -227,7 +237,7 @@ const PostModal: React.FC<PostModalProps> = ({
     const diffDays = Math.floor(diffMs / 86400000);
     const diffWeeks = Math.floor(diffDays / 7);
 
-    if (diffMins < 1) return 'ahora';
+    if (diffMins < 1) return "ahora";
     if (diffMins < 60) return `${diffMins}m`;
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays < 7) return `${diffDays}d`;
@@ -239,99 +249,126 @@ const PostModal: React.FC<PostModalProps> = ({
     const hasReplies = comment.replies && comment.replies.length > 0;
     const showReplies = expandedReplies.has(comment._id);
     const author = getAuthorData(comment.authorID);
-    
-    // Limitar indentación máxima para que no se salga del contenedor
-    const marginLeft = Math.min(depth * 40, 80);
+    const marginLeft = Math.min(depth * 20, 40);
 
     return (
-      <div key={comment._id} className="mb-4" style={{ marginLeft: `${marginLeft}px` }}>
-        <div className="flex items-start gap-3">
-          {/* Avatar */}
-          <div className={`${depth > 0 ? 'w-7 h-7' : 'w-8 h-8'} rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex-shrink-0 overflow-hidden`}>
+      <div
+        key={comment._id}
+        className="mb-4"
+        style={{ marginLeft: `${marginLeft}px` }}
+      >
+               {" "}
+        <div
+          className={`flex items-start gap-3 ${
+            depth > 0 ? "border-l border-gray-200 pl-3" : ""
+          }`}
+        >
+                   {" "}
+          <div
+            className={`${
+              depth > 0 ? "w-6 h-6" : "w-8 h-8"
+            } rounded-full bg-[#B24700] flex-shrink-0 overflow-hidden border border-[#f7cda3]`}
+          >
+                       {" "}
             {author.userPhoto ? (
-              <img 
-                src={author.userPhoto} 
-                alt={author.username} 
+              <img
+                src={author.userPhoto}
+                alt={author.username}
                 className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold">
-                {author.username?.charAt(0).toUpperCase() || '?'}
+                               {" "}
+                {author.username?.charAt(0).toUpperCase() || "?"}             {" "}
               </div>
             )}
+                     {" "}
           </div>
-
-          {/* Contenido */}
+                   {" "}
           <div className="flex-1 min-w-0">
-            <div>
-              <span className="font-semibold text-sm text-gray-900 mr-2">
-                {author.username}
+                       {" "}
+            <div className="bg-[#fff8f5] rounded-xl p-2.5">
+                           {" "}
+              <span className="font-bold text-sm text-[#B24700] mr-2">
+                                {author.username}             {" "}
               </span>
+                           {" "}
               <span className="text-sm text-gray-800 break-words">
-                {comment.textBody}
+                                {comment.textBody}             {" "}
               </span>
+                         {" "}
             </div>
-
-            {/* Acciones */}
-            <div className="flex items-center gap-4 mt-1">
-              <span className="text-xs text-gray-400">
-                {formatTimeAgo(comment.createdAt)}
+                       {" "}
+            <div className="flex items-center gap-4 mt-1 pl-1">
+                           {" "}
+              <span className="text-xs text-gray-500 flex items-center gap-1">
+                <Clock className="w-3 h-3" />               {" "}
+                {formatTimeAgo(comment.createdAt)}             {" "}
               </span>
-              
+                                         {" "}
               <button
                 onClick={() => {
                   setReplyingTo({ id: comment._id, username: author.username });
                   setNewComment(`@${author.username} `);
                 }}
-                className="text-xs text-gray-500 font-semibold hover:text-gray-700"
+                className="text-xs text-[#F45C1C] font-bold hover:text-[#B24700] transition flex items-center"
               >
-                Responder
+                <CornerDownRight className="w-3 h-3 mr-1" />               
+                Responder              {" "}
               </button>
-
-              {isAuthor && (
+                           {" "}
+              {(isAuthor || isAdmin) && (
                 <button
                   onClick={() => handleDeleteComment(comment._id)}
-                  className="text-xs text-gray-400 hover:text-red-500"
+                  className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1"
                 >
-                  Eliminar
+                  <Trash2 className="w-3 h-3" />                  Eliminar      
+                           {" "}
                 </button>
               )}
-
+                           {" "}
               {comment.isEdited && (
                 <span className="text-xs text-gray-400">(editado)</span>
               )}
+                         {" "}
             </div>
-
-            {/* Ver respuestas */}
+                       {" "}
             {hasReplies && (
               <button
                 onClick={() => toggleReplies(comment._id)}
-                className="flex items-center gap-2 mt-2 text-xs text-gray-500 font-semibold hover:text-gray-700"
+                className="flex items-center gap-2 mt-2 text-xs text-[#F45C1C] font-semibold hover:text-[#B24700] transition"
               >
-                <div className="w-6 h-px bg-gray-300"></div>
-                {showReplies 
-                  ? 'Ocultar respuestas' 
-                  : `Ver ${comment.replies.length} respuesta${comment.replies.length > 1 ? 's' : ''}`
-                }
+                                <div className="w-6 h-px bg-[#F45C1C]"></div>   
+                           {" "}
+                {showReplies
+                  ? "Ocultar respuestas"
+                  : `Ver ${comment.replies.length} respuesta${
+                      comment.replies.length > 1 ? "s" : ""
+                    }`}
+                             {" "}
               </button>
             )}
+                     {" "}
           </div>
+                 {" "}
         </div>
-
-        {/* Respuestas anidadas */}
+               {" "}
         {hasReplies && showReplies && (
           <div className="mt-3">
-            {comment.replies.map(reply => renderComment(reply, depth + 1))}
+                       {" "}
+            {comment.replies.map((reply) => renderComment(reply, depth + 1))}   
+                 {" "}
           </div>
         )}
+             {" "}
       </div>
     );
   };
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-white border-t-transparent"></div>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+                <Loader2 className="animate-spin h-10 w-10 text-white" />     {" "}
       </div>
     );
   }
@@ -340,211 +377,290 @@ const PostModal: React.FC<PostModalProps> = ({
 
   const postAuthor = getAuthorData(post.authorID);
   const isOwner = postAuthor._id === user?.id;
-  const canDelete = isOwner || isAdmin; // ✅ Puede eliminar si es dueño o admin
+  const canDelete = isOwner || isAdmin;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+    <div
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
-      <button 
+           {" "}
+      <button
         onClick={onClose}
-        className="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 z-50"
+        className="absolute top-4 right-4 text-white hover:text-[#F45C1C] transition z-50 p-2 rounded-full bg-black/30"
       >
-        ×
+                <X className="w-8 h-8" />     {" "}
       </button>
-
+           {" "}
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] max-h-[700px] overflow-hidden flex"
+        className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] max-h-[700px] overflow-hidden flex"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Imagen */}
+               {" "}
         <div className="w-1/2 bg-black flex items-center justify-center">
+                   {" "}
           {!imageError ? (
             <img
               src={post.mediaURL}
-              alt="Post"
+              alt="Post content"
               className="w-full h-full object-contain"
               onError={() => setImageError(true)}
             />
           ) : (
             <div className="flex flex-col items-center justify-center text-gray-400">
-              <span className="text-6xl mb-2">🖼️</span>
-              <span className="text-sm">Imagen no disponible</span>
+                            <Camera className="w-16 h-16 mb-2" />             {" "}
+              <span className="text-sm">Imagen no disponible</span>           {" "}
             </div>
           )}
+                 {" "}
         </div>
-
-        {/* Panel derecho */}
-        <div className="w-1/2 flex flex-col h-full">
-          {/* Header con botón eliminar */}
-          <div className="flex items-center justify-between gap-3 p-4 border-b border-gray-200">
+               {" "}
+        <div className="w-1/2 flex flex-col h-full bg-[#fff8f5]">
+                   {" "}
+          <div className="flex items-center justify-between gap-3 p-4 border-b border-[#f7cda3]">
+                       {" "}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 overflow-hidden flex-shrink-0">
+                           {" "}
+              <div className="w-10 h-10 rounded-full bg-[#B24700] overflow-hidden flex-shrink-0 border border-[#F45C1C]">
+                               {" "}
                 {postAuthor.userPhoto ? (
-                  <img 
-                    src={postAuthor.userPhoto} 
+                  <img
+                    src={postAuthor.userPhoto}
                     alt={postAuthor.username}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                    {postAuthor.username?.charAt(0).toUpperCase() || '?'}
+                                        <User className="w-5 h-5" />           
+                         {" "}
                   </div>
                 )}
+                             {" "}
               </div>
-              <span className="font-semibold text-gray-900">{postAuthor.username}</span>
+                           {" "}
+              <span className="font-bold text-[#B24700]">
+                {postAuthor.username}
+              </span>
+                         {" "}
             </div>
-
-            {/* ✅ Botón eliminar */}
+                       {" "}
             {canDelete && (
               <button
                 onClick={handleDeletePost}
-                className="text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50"
+                className="text-red-600 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50 flex items-center gap-1 font-semibold text-sm"
                 title={isOwner ? "Eliminar tu post" : "Eliminar post (Admin)"}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                                <Trash2 className="w-5 h-5" />
+                {isAdmin && !isOwner && (
+                  <UserMinus className="w-3 h-3 text-red-500 absolute -top-1 -right-1" />
+                )}
+                             {" "}
               </button>
             )}
+                     {" "}
           </div>
-
-          {/* Comentarios con scroll */}
+                   {" "}
           <div className="flex-1 overflow-y-auto p-4">
-            {/* Descripción del post */}
+                       {" "}
             {post.textBody && (
-              <div className="flex items-start gap-3 mb-4 pb-4 border-b border-gray-100">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 overflow-hidden flex-shrink-0">
+              <div className="flex items-start gap-3 mb-4 pb-4 border-b border-[#f7cda3]">
+                               {" "}
+                <div className="w-8 h-8 rounded-full bg-[#B24700] overflow-hidden flex-shrink-0">
+                                   {" "}
                   {postAuthor.userPhoto ? (
-                    <img src={postAuthor.userPhoto} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={postAuthor.userPhoto}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold">
-                      {postAuthor.username?.charAt(0).toUpperCase() || '?'}
+                                            <User className="w-4 h-4" />       
+                                 {" "}
                     </div>
                   )}
+                                 {" "}
                 </div>
-                <div>
-                  <span className="font-semibold text-sm text-gray-900 mr-2">
-                    {postAuthor.username}
-                  </span>
-                  <span className="text-sm text-gray-800">{post.textBody}</span>
-                  
-                  {post.hashtags && post.hashtags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {post.hashtags.map((tag, i) => (
-                        <span key={i} className="text-sm text-blue-500">#{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="text-xs text-gray-400 mt-1">
-                    {formatTimeAgo(post.createdAt)}
+                               {" "}
+                <div className="flex-1">
+                                   {" "}
+                  <div className="bg-[#FFE5C2]/50 rounded-xl p-2.5">
+                                       {" "}
+                    <span className="font-bold text-sm text-[#B24700] mr-2">
+                                            {postAuthor.username}               
+                         {" "}
+                    </span>
+                                       {" "}
+                    <span className="text-sm text-gray-800 break-words">
+                      {post.textBody}
+                    </span>
+                                     {" "}
                   </div>
+                                                     {" "}
+                  {post.hashtags && post.hashtags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                                           {" "}
+                      {post.hashtags.map((tag, i) => (
+                        <span
+                          key={i}
+                          className="text-xs text-[#F45C1C] hover:underline cursor-pointer"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                                         {" "}
+                    </div>
+                  )}
+                                                     {" "}
+                  <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />                   {" "}
+                    {formatTimeAgo(post.createdAt)}                 {" "}
+                  </div>
+                                 {" "}
                 </div>
+                             {" "}
               </div>
             )}
-
-            {/* Lista de comentarios */}
+                       {" "}
             {comments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-32 text-gray-400">
-                <span className="text-3xl mb-2">💬</span>
-                <p className="text-sm">No hay comentarios aún</p>
-                <p className="text-xs">¡Sé el primero en comentar!</p>
+              <div className="flex flex-col items-center justify-center h-32 text-gray-500">
+                               {" "}
+                <MessageSquare className="w-10 h-10 mb-2 text-[#f7cda3]" />     
+                         {" "}
+                <p className="text-sm font-semibold">No hay comentarios aún</p> 
+                             {" "}
+                <p className="text-xs">¡Sé el primero en comentar!</p>         
+                   {" "}
               </div>
             ) : (
-              <div>{comments.map(comment => renderComment(comment))}</div>
+              <div className="divide-y divide-[#f7cda3]">
+                {comments.map((comment) => renderComment(comment))}
+              </div>
             )}
+                     {" "}
           </div>
-
-          {/* Acciones y input - fijo abajo */}
-          <div className="border-t border-gray-200">
-            {/* Botones de reacción */}
+                   {" "}
+          <div className="border-t border-[#f7cda3] bg-white">
+                       {" "}
             <div className="flex items-center gap-4 p-4 pb-2">
+                           {" "}
               <button
                 onClick={handleLike}
-                className={`transition-transform hover:scale-110 ${post.hasLiked ? 'text-red-500' : 'text-gray-700'}`}
+                className="group transition-transform hover:scale-110"
               >
-                <svg className="w-7 h-7" fill={post.hasLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                               {" "}
+                <Heart
+                  className={`w-6 h-6 transition ${
+                    post.hasLiked
+                      ? "text-red-500 fill-red-500"
+                      : "text-gray-600 group-hover:text-red-400"
+                  }`}
+                  fill={post.hasLiked ? "currentColor" : "none"}
+                />
+                             {" "}
               </button>
-              
+                                         {" "}
               <button
                 onClick={handleDislike}
-                className={`transition-transform hover:scale-110 ${post.hasDisliked ? 'text-blue-500' : 'text-gray-700'}`}
+                className="group transition-transform hover:scale-110"
               >
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
-                </svg>
+                               {" "}
+                <ThumbsDown
+                  className={`w-6 h-6 transition ${
+                    post.hasDisliked
+                      ? "text-blue-500 fill-blue-500"
+                      : "text-gray-600 group-hover:text-blue-400"
+                  }`}
+                  fill={post.hasDisliked ? "currentColor" : "none"}
+                />
+                             {" "}
               </button>
-
-              <button className="text-gray-700 hover:text-gray-900 transition-transform hover:scale-110">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
+                           {" "}
+              <button
+                className="text-gray-600 hover:text-[#B24700] transition-transform hover:scale-110"
+                onClick={() => inputRef.current?.focus()}
+              >
+                                <MessageSquare className="w-6 h-6" />           
+                 {" "}
               </button>
+                         {" "}
             </div>
-
-            {/* Contadores */}
-            <div className="px-4 pb-2 flex gap-4">
-              <span className="font-semibold text-sm text-gray-900">
-                {post.likesCount} Me gusta
+                       {" "}
+            <div className="px-4 pb-3 flex gap-4">
+                           {" "}
+              <span className="font-bold text-sm text-[#B24700]">
+                                {post.likesCount} Me gusta              {" "}
               </span>
+                           {" "}
               <span className="text-sm text-gray-500">
-                {post.dislikesCount} No me gusta
+                                {post.dislikesCount} No me gusta              {" "}
               </span>
+                         {" "}
             </div>
-
-            {/* Indicador de respuesta */}
+                       {" "}
             {replyingTo && (
-              <div className="px-4 py-2 bg-gray-50 flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  Respondiendo a <span className="font-semibold">@{replyingTo.username}</span>
+              <div className="px-4 py-2 bg-[#FFE5C2] flex items-center justify-between text-sm rounded-t-xl mx-2 shadow-inner">
+                               {" "}
+                <span className="text-[#B24700] font-semibold">
+                                    Respondiendo a{" "}
+                  <span className="font-bold">@{replyingTo.username}</span>     
+                           {" "}
                 </span>
+                               {" "}
                 <button
                   onClick={() => {
                     setReplyingTo(null);
-                    setNewComment('');
+                    setNewComment("");
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-[#F45C1C] hover:text-red-600 p-1"
                 >
-                  ×
+                                    <X className="w-4 h-4" />               {" "}
                 </button>
+                             {" "}
               </div>
             )}
-
-            {/* Input */}
-            <div className="flex items-center gap-2 p-4 pt-2">
+                       {" "}
+            <div
+              className={`flex items-center gap-2 p-4 ${
+                replyingTo ? "pt-1" : "pt-2"
+              }`}
+            >
+                           {" "}
               <input
                 ref={inputRef}
                 type="text"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Añade un comentario..."
-                className="flex-1 text-sm border-none outline-none bg-transparent placeholder-gray-400"
+                className="flex-1 text-sm border border-gray-300 rounded-full px-4 py-2 outline-none focus:ring-1 focus:ring-[#F45C1C] bg-[#fff8f5]"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleAddComment();
                   }
                 }}
               />
+                           {" "}
               <button
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
-                className={`text-sm font-semibold transition-colors ${
-                  newComment.trim() 
-                    ? 'text-blue-500 hover:text-blue-600' 
-                    : 'text-blue-300 cursor-not-allowed'
+                className={`text-sm font-bold transition-colors px-3 py-2 rounded-full ${
+                  newComment.trim()
+                    ? "bg-[#F45C1C] text-white hover:bg-[#c94917] shadow-md"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                Publicar
+                                Publicar              {" "}
               </button>
+                         {" "}
             </div>
+                     {" "}
           </div>
+                 {" "}
         </div>
+             {" "}
       </div>
+         {" "}
     </div>
   );
 };

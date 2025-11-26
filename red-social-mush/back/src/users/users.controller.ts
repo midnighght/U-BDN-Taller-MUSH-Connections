@@ -41,7 +41,6 @@ export class UsersController {
 
     }
 
-     // ✅ NUEVO: Ver perfil de otro usuario
     @Get(':userId')
     @UseGuards(AuthGuard)
     async getUserProfile(@Param('userId') userId: string, @Request() req) {

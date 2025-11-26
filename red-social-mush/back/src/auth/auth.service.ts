@@ -18,7 +18,8 @@ import {
   signInDTO,
 } from './dto/auth.dto';
 import { EmailService } from 'src/email/email.service';
-import { Neo4jService } from 'src/neo4j/neo4j.service'; // ✅ Importar Neo4jService
+import { Neo4jService } from 'src/neo4j/neo4j.service'; 
+import { FriendshipsService } from 'src/friendships/friendships.service';
 
 type SignInData = { userId: string; username: string; email: string };
 
@@ -29,7 +30,8 @@ export class AuthService {
     private jwtService: JwtService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private emailService: EmailService,
-    private neo4jService: Neo4jService, // ✅ Inyectar Neo4jService
+    private neo4jService: Neo4jService, 
+     private friendshipsService: FriendshipsService
   ) {}
 
   async authenticate(@Body() loginDTO: loginDTO): Promise<loginResponseDTO> {
@@ -38,7 +40,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // ✅ VERIFICAR SI EL EMAIL ESTÁ VERIFICADO
+    
     const userDoc = await this.userModel.findOne({ email: loginDTO.email });
     if (userDoc && !userDoc.isVerified) {
       throw new UnauthorizedException(
@@ -97,7 +99,7 @@ export class AuthService {
   async register(
     @Body() registerDTO: registerDTO,
   ): Promise<{ message: string }> {
-    // Verificar si el usuario ya existe
+    
     const existingUser = await this.userModel.findOne({
       $or: [{ email: registerDTO.email }, { username: registerDTO.username }],
     });
@@ -111,15 +113,15 @@ export class AuthService {
       throw new BadRequestException('Este nombre de usuario ya está en uso');
     }
 
-    // Hash de la contraseña
+   
     const hashedPassword = await bcrypt.hash(registerDTO.password, 10);
 
-    // ✅ GENERAR TOKEN DE VERIFICACIÓN
+   
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationTokenExpires = new Date();
     verificationTokenExpires.setHours(verificationTokenExpires.getHours() + 24);
 
-    // Crear usuario en MongoDB
+  
     const user = new this.userModel({
       username: registerDTO.username,
       email: registerDTO.email,
@@ -136,7 +138,7 @@ export class AuthService {
 
     const savedUser = await user.save();
 
-    // ✅ Accede al _id de esta forma más segura:
+   
     const userId = savedUser._id?.toString() || savedUser.id;
 
     try {
@@ -145,12 +147,12 @@ export class AuthService {
         savedUser.username,
         savedUser.userPhoto || '',
       );
-      console.log('✅ Usuario creado en Neo4j:', userId);
+     
     } catch (error) {
-      console.error('⚠️ Error creando usuario en Neo4j:', error);
+      
     }
 
-    // ✅ ENVIAR EMAIL DE VERIFICACIÓN
+    
     try {
       await this.emailService.sendVerificationEmail(
         user.email,
@@ -167,7 +169,7 @@ export class AuthService {
     };
   }
 
-  // ✅ NUEVO: Verificar email
+  
   async verifyEmail(token: string): Promise<{ message: string }> {
     console.log('🔍 Buscando usuario con token:', token);
 
@@ -177,15 +179,15 @@ export class AuthService {
     });
 
     if (!user) {
-      console.log('❌ Token inválido o expirado');
+      console.log('Token inválido o expirado');
       throw new BadRequestException(
         'Token de verificación inválido o expirado',
       );
     }
 
-    console.log('👤 Usuario encontrado:', user.email);
+  
 
-    // Marcar como verificado y eliminar tokens
+   
     await this.userModel.findByIdAndUpdate(user._id, {
       $set: { isVerified: true },
       $unset: {
@@ -194,14 +196,14 @@ export class AuthService {
       },
     });
 
-    console.log('✅ Usuario marcado como verificado');
+ 
 
-    // Enviar email de bienvenida
+    
     try {
       await this.emailService.sendWelcomeEmail(user.email, user.username);
-      console.log('📧 Email de bienvenida enviado');
+      console.log('Email de bienvenida enviado');
     } catch (error) {
-      console.error('⚠️ Error al enviar email de bienvenida:', error);
+      console.error('Error al enviar email de bienvenida:', error);
     }
 
     return {
@@ -230,41 +232,41 @@ export class AuthService {
     }
   }
 
-  // ✅ NUEVO: Solicitar reset de contraseña
+
   async requestPasswordReset(email: string): Promise<{ message: string }> {
     console.log('🔑 Solicitud de reset de contraseña para:', email);
 
     const user = await this.userModel.findOne({ email });
 
     if (!user) {
-      // Por seguridad, no revelar si el email existe o no
+    
       return {
         message:
           'Si el correo existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña.',
       };
     }
 
-    // Generar token de reset
+    
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetExpires = new Date();
-    resetExpires.setHours(resetExpires.getHours() + 1); // Expira en 1 hora
+    resetExpires.setHours(resetExpires.getHours() + 1); 
 
-    // Guardar token en BD
+    
     await this.userModel.findByIdAndUpdate(user._id, {
       resetPasswordToken: resetToken,
       resetPasswordExpires: resetExpires,
     });
 
-    // Enviar email
+   
     try {
       await this.emailService.sendPasswordResetEmail(
         user.email,
         user.username,
         resetToken,
       );
-      console.log('✅ Email de recuperación enviado');
+      console.log('Email de recuperación enviado');
     } catch (error) {
-      console.error('❌ Error al enviar email:', error);
+      console.error('Error al enviar email:', error);
       throw new BadRequestException(
         'No se pudo enviar el email de recuperación',
       );
@@ -276,7 +278,7 @@ export class AuthService {
     };
   }
 
-  // ✅ NUEVO: Restablecer contraseña con token
+  
   async resetPassword(
     token: string,
     newPassword: string,
@@ -294,10 +296,10 @@ export class AuthService {
       );
     }
 
-    // Hash de la nueva contraseña
+    
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Actualizar contraseña y eliminar tokens
+    
     await this.userModel.findByIdAndUpdate(user._id, {
       password: hashedPassword,
       $unset: {
@@ -306,11 +308,21 @@ export class AuthService {
       },
     });
 
-    console.log('✅ Contraseña restablecida exitosamente para:', user.email);
+    
 
     return {
       message:
         'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.',
     };
   }
+
+  async countFriends(userId: string): Promise<number> {
+  try {
+    const friends = await this.friendshipsService.getFriends(userId);
+    return friends.length;
+  } catch (error) {
+    console.error('Error contando amigos:', error);
+    return 0;
+  }
+}
 }

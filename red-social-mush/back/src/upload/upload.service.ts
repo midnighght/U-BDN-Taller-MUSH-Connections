@@ -6,9 +6,7 @@ import { v2 as cloudinary } from 'cloudinary';
 export class UploadService {
   constructor(private readonly cloudinaryService: CloudinaryService) {}
 
-  /**
-   * Sube imagen a Cloudinary desde File (para posts con FileInterceptor)
-   */
+  
   async uploadImageToCloudinary(file: Express.Multer.File): Promise<string> {
     try {
       const result = await this.cloudinaryService.uploadImage(file);
@@ -19,9 +17,6 @@ export class UploadService {
     }
   }
 
-  /**
-   * Sube imagen base64 a Cloudinary (para communities, users)
-   */
   async saveImageBase64(base64String: string): Promise<string> {
     try {
       return await this.uploadBase64ToCloudinary(base64String);
@@ -31,28 +26,22 @@ export class UploadService {
     }
   }
 
-  /**
-   * Método privado para subir base64 a Cloudinary
-   */
   private async uploadBase64ToCloudinary(base64String: string): Promise<string> {
     return new Promise((resolve, reject) => {
       cloudinary.uploader.upload(
         base64String,
         {
-          folder: 'user-photos', // Carpeta en Cloudinary
+          folder: 'user-photos', 
           resource_type: 'auto',
         },
         (error, result) => {
           if (error) return reject(error);
-          resolve(result!.secure_url); // Retorna URL de Cloudinary
+          resolve(result!.secure_url); 
         }
       );
     });
   }
 
-  /**
-   * Elimina imagen de Cloudinary
-   */
   async deleteImageFromCloudinary(publicId: string): Promise<void> {
     try {
       await this.cloudinaryService.deleteImage(publicId);

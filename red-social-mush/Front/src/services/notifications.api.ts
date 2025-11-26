@@ -1,7 +1,6 @@
 const API_BASE_URL = 'http://localhost:3000';
 
 export const notifications_api = {
-  // ✅ Obtener notificaciones no leídas
   async getUnreadNotifications(token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/notifications/unread`, {
@@ -23,7 +22,6 @@ export const notifications_api = {
     }
   },
 
-  // ✅ Obtener contador de no leídas
   async getUnreadCount(token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/notifications/unread/count`, {
@@ -45,7 +43,6 @@ export const notifications_api = {
     }
   },
 
-  // ✅ Obtener todas las notificaciones (con paginación)
   async getAllNotifications(token: string, page: number = 1, limit: number = 20) {
     try {
       const response = await fetch(
@@ -70,7 +67,6 @@ export const notifications_api = {
     }
   },
 
-  // ✅ Marcar como leída
   async markAsRead(notificationId: string, token: string) {
     try {
       const response = await fetch(
@@ -95,7 +91,6 @@ export const notifications_api = {
     }
   },
 
-  // ✅ Marcar todas como leídas
   async markAllAsRead(token: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
@@ -117,8 +112,7 @@ export const notifications_api = {
     }
   },
 
-  // ✅ Eliminar notificación
-  // Eliminar una notificación específica
+
 async deleteNotification(notificationId: string, token: string) {
   const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
     method: 'DELETE',
