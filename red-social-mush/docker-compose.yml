@@ -1,0 +1,95 @@
+services:
+  mongodb-service:
+    image: mongodb/mongodb-community-server:latest
+    container_name: mush-mongodb
+    restart: unless-stopped
+    ports:
+      - "38130:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mush
+      MONGO_INITDB_ROOT_PASSWORD: password1234
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  neo4j-service:
+    image: neo4j:5
+    container_name: mush-neo4j
+    restart: unless-stopped
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password1234
+      NEO4J_dbms_memory_heap_max__size: 512M
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend-service:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: mush-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      # MongoDB - USAR NOMBRE DEL SERVICIO
+      MONGODB_URI: mongodb://mush:password1234@mongodb-service:27017/redsocial?authSource=admin
+      # Neo4j - USAR NOMBRE DEL SERVICIO
+      NEO4J_URI: bolt://neo4j-service:7687
+      NEO4J_USERNAME: neo4j
+      NEO4J_PASSWORD: password1234
+    volumes:
+      - ./back:/app
+      - /app/node_modules
+    depends_on:
+      mongodb-service:
+        condition: service_healthy
+      neo4j-service:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  frontend-service:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: mush-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    depends_on:
+      - backend-service
+    networks:
+      - app-network
+
+volumes:
+  mongo-data:
+  neo4j-data:
+  neo4j-logs:
+
+networks:
+  app-network:
+    driver: bridge

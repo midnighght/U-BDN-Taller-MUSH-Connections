@@ -1,0 +1,446 @@
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import {
+  Request,
+  RequestDocument,
+  RequestType,
+  RequestStatus,
+} from './schemas/requests.schema';
+import {
+  Friendship,
+  FriendshipDocument,
+  FriendshipStatus,
+} from 'src/friendships/schemas/friendship.schema';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { NotificationType } from 'src/notifications/schemas/notification.schema';
+import { Neo4jService } from 'src/neo4j/neo4j.service';
+
+@Injectable()
+export class RequestsService {
+  constructor(
+    @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
+    @InjectModel(Friendship.name)
+    private friendshipModel: Model<FriendshipDocument>,
+    private notificationsService: NotificationsService,
+    private neo4jService: Neo4jService, 
+  ) {}
+
+  async createFriendRequest(requesterId: string, recipientId: string) {
+    console.log('Creando solicitud de amistad');
+    console.log('   De:', requesterId);
+    console.log('   Para:', recipientId);
+
+    if (requesterId === recipientId) {
+      throw new BadRequestException(
+        'No puedes enviarte una solicitud a ti mismo',
+      );
+    }
+
+    const requesterObjectId = new Types.ObjectId(requesterId);
+    const recipientObjectId = new Types.ObjectId(recipientId);
+
+    const existingFriendship = await this.friendshipModel.findOne({
+      $or: [
+        {
+          requesterID: requesterObjectId,
+          recipientID: recipientObjectId,
+          status: FriendshipStatus.ACCEPTED,
+        },
+        {
+          requesterID: recipientObjectId,
+          recipientID: requesterObjectId,
+          status: FriendshipStatus.ACCEPTED,
+        },
+      ],
+    });
+
+    if (existingFriendship) {
+      throw new BadRequestException('Ya son amigos');
+    }
+
+    const existingRequest = await this.requestModel.findOne({
+      $or: [
+        { requesterID: requesterObjectId, recipientID: recipientObjectId },
+        { requesterID: recipientObjectId, recipientID: requesterObjectId },
+      ],
+      type: RequestType.FRIEND_REQUEST,
+      status: RequestStatus.PENDING,
+    });
+
+    if (existingRequest) {
+      throw new BadRequestException('Ya existe una solicitud pendiente');
+    }
+
+    const request = new this.requestModel({
+      requesterID: requesterObjectId,
+      recipientID: recipientObjectId,
+      type: RequestType.FRIEND_REQUEST,
+      status: RequestStatus.PENDING,
+    }) as RequestDocument;
+
+    await request.save();
+
+    try {
+      await this.neo4jService.createFriendRequest(requesterId, recipientId);
+    } catch (error) {
+      console.error('Error sincronizando solicitud con Neo4j:', error);
+    }
+
+    await this.notificationsService.createNotification({
+      recipientID: recipientId,
+      senderID: requesterId,
+      type: NotificationType.FRIEND_REQUEST,
+      message: 'te envió una solicitud de amistad',
+      relatedID: (request._id as Types.ObjectId).toString(),
+    });
+
+    console.log('Solicitud de amistad creada:', request._id);
+    return {
+      success: true,
+      message: 'Solicitud enviada',
+      requestId: request._id,
+    };
+  }
+
+  async acceptRequest(requestId: string, approverId: string) {
+    console.log('Aceptando solicitud:', requestId);
+
+    const request = await this.requestModel.findById(requestId);
+
+    if (!request) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    if (request.status !== RequestStatus.PENDING) {
+      throw new BadRequestException('Esta solicitud ya fue procesada');
+    }
+
+    if (request.type === RequestType.FRIEND_REQUEST) {
+      if (request.recipientID?.toString() !== approverId) {
+        throw new BadRequestException('No puedes aceptar esta solicitud');
+      }
+
+      const requesterIdStr = request.requesterID.toString();
+      const recipientIdStr = request.recipientID.toString();
+
+      const friendship = new this.friendshipModel({
+        requesterID: request.requesterID,
+        recipientID: request.recipientID,
+        status: FriendshipStatus.ACCEPTED,
+      });
+      await friendship.save();
+
+      console.log('Friendship creada en MongoDB:', friendship._id);
+
+      try {
+        await this.neo4jService.removeFriendRequest(
+          requesterIdStr,
+          recipientIdStr,
+        );
+        await this.neo4jService.createFriendship(
+          requesterIdStr,
+          recipientIdStr,
+        );
+      } catch (error) {
+        console.error('Error sincronizando aceptación con Neo4j:', error);
+      }
+
+      await this.notificationsService.createNotification({
+        recipientID: request.requesterID.toString(),
+        senderID: approverId,
+        type: NotificationType.FRIEND_ACCEPT,
+        message: 'aceptó tu solicitud de amistad',
+      });
+    }
+
+    await this.requestModel.findByIdAndDelete(requestId);
+
+    try {
+      await this.notificationsService.deleteNotificationByRelatedId(requestId);
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+    }
+
+    console.log('Solicitud aceptada y procesada');
+    return { success: true, message: 'Solicitud aceptada' };
+  }
+
+  async rejectRequest(requestId: string, approverId: string) {
+    console.log('Rechazando solicitud:', requestId);
+
+    const request = await this.requestModel.findById(requestId);
+
+    if (!request) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    if (request.status !== RequestStatus.PENDING) {
+      throw new BadRequestException('Esta solicitud ya fue procesada');
+    }
+
+    if (request.type === RequestType.FRIEND_REQUEST) {
+      if (request.recipientID?.toString() !== approverId) {
+        throw new BadRequestException('No puedes rechazar esta solicitud');
+      }
+
+      try {
+        await this.neo4jService.removeFriendRequest(
+          request.requesterID.toString(),
+          request.recipientID.toString(),
+        );
+      } catch (error) {
+        console.error('Error sincronizando rechazo con Neo4j:', error);
+      }
+    }
+
+    await this.requestModel.findByIdAndDelete(requestId);
+
+    try {
+      await this.notificationsService.deleteNotificationByRelatedId(requestId);
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+    }
+
+    console.log('Solicitud rechazada y eliminada');
+    return { success: true, message: 'Solicitud rechazada' };
+  }
+
+  async getUserPendingRequests(userId: string) {
+    console.log('Obteniendo solicitudes pendientes para:', userId);
+
+    const requests = await this.requestModel
+      .find({
+        recipientID: userId,
+        type: RequestType.FRIEND_REQUEST,
+        status: RequestStatus.PENDING,
+      })
+      .populate('requesterID', 'username userPhoto')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    console.log('Solicitudes encontradas:', requests.length);
+
+    return requests.map((req: any) => ({
+      _id: req._id,
+      type: req.type,
+      requester: {
+        _id: req.requesterID._id,
+        username: req.requesterID.username,
+        userPhoto: req.requesterID.userPhoto,
+      },
+      createdAt: req.createdAt,
+    }));
+  }
+
+  async getFriendRequestStatus(userId: string, otherUserId: string) {
+    console.log('Verificando solicitud entre:', userId, 'y', otherUserId);
+
+    const userObjectId = new Types.ObjectId(userId);
+    const otherUserObjectId = new Types.ObjectId(otherUserId);
+
+    const request = await this.requestModel
+      .findOne({
+        $or: [
+          { requesterID: userObjectId, recipientID: otherUserObjectId },
+          { requesterID: otherUserObjectId, recipientID: userObjectId },
+        ],
+        type: RequestType.FRIEND_REQUEST,
+        status: RequestStatus.PENDING,
+      })
+      .lean()
+      .exec();
+
+    console.log('Solicitud encontrada:', request ? 'SÍ' : 'NO');
+
+    if (!request) {
+      const friendship = await this.friendshipModel
+        .findOne({
+          $or: [
+            {
+              requesterID: userObjectId,
+              recipientID: otherUserObjectId,
+              status: FriendshipStatus.ACCEPTED,
+            },
+            {
+              requesterID: otherUserObjectId,
+              recipientID: userObjectId,
+              status: FriendshipStatus.ACCEPTED,
+            },
+          ],
+        })
+        .lean()
+        .exec();
+
+      if (friendship) {
+        console.log('Ya son amigos');
+        return { status: 'friends', canSendRequest: false };
+      }
+
+      console.log('No hay solicitud ni amistad');
+      return { status: 'none', canSendRequest: true };
+    }
+
+    const isSender = request.requesterID.toString() === userId;
+    const requestId = request._id.toString();
+
+    console.log(' Estado de solicitud:', {
+      status: 'pending',
+      isSender,
+      requestId,
+      requesterID: request.requesterID.toString(),
+      recipientID: request.recipientID?.toString(),
+      userId,
+    });
+
+    return {
+      status: 'pending',
+      canSendRequest: false,
+      isSender,
+      requestId,
+    };
+  }
+
+  async getCommunityPendingRequests(communityId: string, userId: string) {
+    console.log('Obteniendo solicitudes para comunidad:', communityId);
+
+    const requests = await this.requestModel
+      .find({
+        communityID: communityId,
+        type: RequestType.COMMUNITY_JOIN,
+        status: RequestStatus.PENDING,
+      })
+      .populate('requesterID', 'username userPhoto')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    console.log('Solicitudes de comunidad encontradas:', requests.length);
+
+    return requests.map((req: any) => ({
+      _id: req._id,
+      type: req.type,
+      communityID: req.communityID,
+      requester: {
+        _id: req.requesterID._id,
+        username: req.requesterID.username,
+        userPhoto: req.requesterID.userPhoto,
+      },
+      metadata: req.metadata,
+      createdAt: req.createdAt,
+    }));
+  }
+
+  async createCommunityJoinRequest(
+    requesterId: string,
+    communityId: string,
+    message?: string,
+  ) {
+    console.log('Creando solicitud para unirse a comunidad');
+    console.log('   Usuario:', requesterId);
+    console.log('   Comunidad:', communityId);
+
+    const existing = await this.requestModel.findOne({
+      requesterID: requesterId,
+      communityID: communityId,
+      type: RequestType.COMMUNITY_JOIN,
+      status: RequestStatus.PENDING,
+    });
+
+    if (existing) {
+      throw new BadRequestException(
+        'Ya existe una solicitud pendiente para esta comunidad',
+      );
+    }
+
+    const request = new this.requestModel({
+      requesterID: new Types.ObjectId(requesterId),
+      communityID: new Types.ObjectId(communityId),
+      type: RequestType.COMMUNITY_JOIN,
+      status: RequestStatus.PENDING,
+      metadata: { message: message || '' },
+    });
+
+    await request.save();
+
+    console.log('Solicitud de comunidad creada:', request._id);
+    return {
+      success: true,
+      message: 'Solicitud enviada',
+      requestId: request._id,
+    };
+  }
+
+  async cancelRequest(requestId: string, requesterId: string) {
+    console.log('Cancelando solicitud:', requestId);
+
+    const request = await this.requestModel.findById(requestId);
+
+    if (!request) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    if (request.status !== RequestStatus.PENDING) {
+      throw new BadRequestException('Esta solicitud ya fue procesada');
+    }
+
+    if (request.requesterID.toString() !== requesterId) {
+      throw new BadRequestException('No puedes cancelar esta solicitud');
+    }
+
+    if (request.type === RequestType.FRIEND_REQUEST) {
+      try {
+        await this.neo4jService.removeFriendRequest(
+          request.requesterID.toString(),
+          request.recipientID?.toString() || '',
+        );
+      } catch (error) {
+        console.error('Error sincronizando cancelación con Neo4j:', error);
+      }
+    }
+
+    await this.requestModel.findByIdAndDelete(requestId);
+
+    try {
+      await this.notificationsService.deleteNotificationByRelatedId(requestId);
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+    }
+
+    console.log('Solicitud cancelada');
+    return { success: true, message: 'Solicitud cancelada' };
+  }
+
+  async getSentRequests(userId: string) {
+    console.log('Obteniendo solicitudes enviadas por:', userId);
+
+    const requests = await this.requestModel
+      .find({
+        requesterID: userId,
+        type: RequestType.FRIEND_REQUEST,
+        status: RequestStatus.PENDING,
+      })
+      .populate('recipientID', 'username userPhoto')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    console.log('Solicitudes enviadas encontradas:', requests.length);
+
+    return requests.map((req: any) => ({
+      _id: req._id,
+      type: req.type,
+      recipient: {
+        _id: req.recipientID._id,
+        username: req.recipientID.username,
+        userPhoto: req.recipientID.userPhoto,
+      },
+      createdAt: req.createdAt,
+    }));
+  }
+}
