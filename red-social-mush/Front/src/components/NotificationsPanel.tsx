@@ -225,63 +225,63 @@ const NotificationsPanel = () => {
 
   return (
     <div className="relative" ref={panelRef}>
-           {" "}
+          {" "}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="bg-[#B24700] p-2 rounded-full hover:bg-[#8f3900] transition relative group shadow-md"
         title="Notificaciones"
       >
-                <Bell className="w-5 h-5 text-white group-hover:scale-105" />   
-           {" "}
+                <Bell className="w-5 h-5 text-white group-hover:scale-105" />  
+          {" "}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold ring-2 ring-white shadow-lg">
-                        {unreadCount > 9 ? "9+" : unreadCount}         {" "}
+                        {unreadCount > 9 ? "9+" : unreadCount}        {" "}
           </span>
         )}
-             {" "}
+            {" "}
       </button>
-           {" "}
+          {" "}
       {isOpen && (
         <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl z-50 max-h-[600px] flex flex-col border border-[#f7cda3] transform transition-opacity duration-300">
-                             {" "}
+                            {" "}
           <div className="p-4 border-b border-[#f7cda3] flex items-center justify-between bg-[#FFE5C2] rounded-t-2xl">
-                       {" "}
+                      {" "}
             <h3 className="font-bold text-[#B24700] text-lg flex items-center">
               <Bell className="w-5 h-5 mr-2" />
               Notificaciones
             </h3>
-                       {" "}
+                      {" "}
             {notifications.length > 0 && unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
                 className="text-xs text-[#F45C1C] hover:text-[#B24700] font-bold flex items-center transition"
               >
-                <MailOpen className="w-4 h-4 mr-1" />                Marcar
-                todas              {" "}
+                <MailOpen className="w-4 h-4 mr-1" />                Marcar
+                todas             {" "}
               </button>
             )}
-                     {" "}
+                    {" "}
           </div>
-                   {" "}
+                  {" "}
           <div className="overflow-y-auto flex-1 divide-y divide-[#f7cda3]/50">
-                       {" "}
+                      {" "}
             {loading ? (
               <div className="flex justify-center items-center py-12">
-                               {" "}
-                <Loader2 className="animate-spin h-8 w-8 text-[#F45C1C]" />     
-                       {" "}
+                              {" "}
+                <Loader2 className="animate-spin h-8 w-8 text-[#F45C1C]" />    
+                      {" "}
               </div>
             ) : notifications.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                               {" "}
-                <Bell className="w-10 h-10 mx-auto mb-2 text-[#f7cda3]" />     
-                         {" "}
-                <p className="text-sm">No tienes notificaciones recientes</p>   
-                         {" "}
+                              {" "}
+                <Bell className="w-10 h-10 mx-auto mb-2 text-[#f7cda3]" />    
+                        {" "}
+                <p className="text-sm">No tienes notificaciones recientes</p>  
+                        {" "}
               </div>
             ) : (
               <div>
-                               {" "}
+                              {" "}
                 {notifications.map((notif) => (
                   <div
                     key={notif._id}
@@ -298,13 +298,13 @@ const NotificationsPanel = () => {
                     <div className="flex-shrink-0 pt-1">
                       {getNotificationIcon(notif.type)}
                     </div>
-                                         {" "}
+                                        {" "}
                     <div className="flex-1 min-w-0">
-                                             {" "}
+                                            {" "}
                       <div className="flex items-start space-x-2">
-                                                 {" "}
+                                                {" "}
                         <div className="w-8 h-8 rounded-full bg-[#FFD89C] overflow-hidden flex-shrink-0 border border-[#f7cda3]">
-                                                     {" "}
+                                                    {" "}
                           {notif.sender.userPhoto ? (
                             <img
                               src={notif.sender.userPhoto}
@@ -316,77 +316,77 @@ const NotificationsPanel = () => {
                               <UserIcon className="w-4 h-4 text-white" />
                             </div>
                           )}
-                                                   {" "}
+                                                  {" "}
                         </div>
-                                                 {" "}
+                                                {" "}
                         <div className="flex-1 min-w-0">
-                                                     {" "}
+                                                    {" "}
                           <p className="text-sm text-gray-800">
-                                                         {" "}
+                                                        {" "}
                             <span className="font-bold text-[#B24700]">
                               {notif.sender.username}
                             </span>{" "}
-                            {notif.message}                           {" "}
+                            {notif.message}                          {" "}
                           </p>
-                                                     {" "}
+                                                    {" "}
                           <p className="text-xs text-gray-500 flex items-center mt-0.5">
                             <Clock className="w-3 h-3 mr-1" />
                             {getTimeAgo(notif.createdAt)}
                           </p>
-                                                   {" "}
+                                                  {" "}
                         </div>
-                                               {" "}
+                                              {" "}
                       </div>
-                                             {" "}
-                      {/* Botones solo para solicitudes de amistad */}         
-                                   {" "}
+                                            {" "}
+                      {/* Botones solo para solicitudes de amistad */}        
+                                  {" "}
                       {notif.type === "friend_request" && notif.relatedID && (
                         <div className="flex gap-2 mt-3">
-                                                     {" "}
+                                                    {" "}
                           <button
                             onClick={(e) => handleAccept(e, notif)}
                             disabled={processingId === notif._id}
                             className="px-3 py-1 text-xs bg-[#F45C1C] text-white rounded-full font-semibold hover:bg-[#c94917] disabled:opacity-50 transition flex items-center"
                           >
-                                                         {" "}
+                                                        {" "}
                             {processingId === notif._id ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
                               "Aceptar"
                             )}
-                                                       {" "}
+                                                      {" "}
                           </button>
-                                                     {" "}
+                                                    {" "}
                           <button
                             onClick={(e) => handleReject(e, notif)}
                             disabled={processingId === notif._id}
                             className="px-3 py-1 text-xs bg-gray-300 text-gray-800 rounded-full font-semibold hover:bg-gray-400 disabled:opacity-50 transition flex items-center"
                           >
-                                                         {" "}
+                                                        {" "}
                             {processingId === notif._id ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
                             ) : (
                               "Rechazar"
                             )}
-                                                       {" "}
+                                                      {" "}
                           </button>
-                                                   {" "}
+                                                  {" "}
                         </div>
                       )}
-                                           {" "}
+                                          {" "}
                     </div>
-                                     {" "}
+                                    {" "}
                   </div>
                 ))}
-                             {" "}
+                            {" "}
               </div>
             )}
-                     {" "}
+                    {" "}
           </div>
-                 {" "}
+                {" "}
         </div>
       )}
-         {" "}
+        {" "}
     </div>
   );
 };

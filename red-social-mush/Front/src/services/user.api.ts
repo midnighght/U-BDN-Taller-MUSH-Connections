@@ -1,5 +1,5 @@
 import { requests_api } from './requests.api';
-const API_BASE_URL = 'http://localhost:3000';
+import { API_BASE_URL } from '../config/api.config';
 
 export const user_api = {
   async getUserProfile(userId: string, token: string) {

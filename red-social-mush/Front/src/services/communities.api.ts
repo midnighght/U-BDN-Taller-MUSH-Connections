@@ -1,9 +1,8 @@
 import type { CreateComunityDTO } from "./dto/communities.api.dto";
-
-const API_BASE_URL = 'http://localhost:3000';
+import { API_BASE_URL } from '../config/api.config';
 
 export const communities_api = {
-  async createComunity(name: String, description: String, hashtags: String, image: String, token: string) {
+  async createComunity(name: string, description: string, hashtags: string, image: string, token: string) {
     const noSpacesHashtags = hashtags.replace(/\s/g, "");
     const splitHashtag = noSpacesHashtags.split("#");
     splitHashtag.splice(0, 1);

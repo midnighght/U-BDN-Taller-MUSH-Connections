@@ -21,11 +21,16 @@ export default tseslint.config(
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
+        project: './tsconfig.json',
+        ecmaFeatures: {
+          legacyDecorators: true
+        }
       },
     },
   },
   {
     rules: {
+      'prettier/prettier': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn'

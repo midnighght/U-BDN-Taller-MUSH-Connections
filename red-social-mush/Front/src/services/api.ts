@@ -1,5 +1,5 @@
 import type{ loginDTO,  registerDTO } from './dto/api.dto';
-const API_BASE_URL = 'http://localhost:3000';
+import { API_BASE_URL } from '../config/api.config';
 
 export const api = {
  
