@@ -36,7 +36,7 @@ const Header = () => {
             onClick={() => navigate("/home")}
             className="w-10 h-10 rounded-full overflow-hidden bg-[#F45C1C] flex items-center justify-center cursor-pointer hover:scale-110 transition shadow-md"
           >     
-            <img src={logoGato} alt="MUSH Logo" className="object-cover w-full h-full" /> 
+            <img src={logoGato} alt="MUSH Logo" className="object-cover w-full h-full p-2" /> 
           </div>
           <h1 
             onClick={() => navigate("/home")} 
