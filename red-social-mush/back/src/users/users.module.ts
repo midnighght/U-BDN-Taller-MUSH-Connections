@@ -14,7 +14,7 @@ import { Request, RequestSchema } from 'src/requests/schemas/requests.schema';
 import { FriendshipsModule } from 'src/friendships/friendships.module';
 import { CommunitiesModule } from 'src/communities/communities.module';
 import { RequestsModule } from 'src/requests/requests.module';
-import { Neo4jModule } from 'src/neo4j/neo4j.module';
+import { Neo4jModule } from 'src/Neo4J/neo4j.module';
 
 @Module({
   imports: [

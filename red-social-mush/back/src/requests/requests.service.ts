@@ -18,7 +18,7 @@ import {
 } from 'src/friendships/schemas/friendship.schema';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/notifications/schemas/notification.schema';
-import { Neo4jService } from 'src/neo4j/neo4j.service';
+import { Neo4jService } from 'src/Neo4J/neo4j.service';
 
 @Injectable()
 export class RequestsService {

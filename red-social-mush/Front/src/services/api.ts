@@ -95,7 +95,7 @@ export const api = {
   
 },
 //taggedUsers y Hashtags hay que separarlos. Deberia enviar el token o id del usuario?
-  async updatePhoto(userPhoto : String, token: String){
+  async updatePhoto(userPhoto : string, token: string){
     try {
         const response = await fetch(`${API_BASE_URL}/users/update-photo`, {
         method: 'PATCH',
@@ -116,7 +116,7 @@ export const api = {
       
   },
 
-  async updateDescription(description:String, token:String): Promise <Boolean>{
+  async updateDescription(description:string, token:string): Promise <boolean>{
 
       try {
         const response = await fetch(`${API_BASE_URL}/users/update-bio`, {
@@ -137,7 +137,7 @@ export const api = {
       return false;
   },
   
-  async deleteAccount(token: String){
+  async deleteAccount(token: string){
     try {
         const url = `${API_BASE_URL}/users/delete-account`;
        
@@ -164,7 +164,7 @@ export const api = {
   },
 
 
-  async updateAccountPrivacy(token:String, isPrivate: boolean) {
+  async updateAccountPrivacy(token:string, isPrivate: boolean) {
     try {
         const response = await fetch(`${API_BASE_URL}/users/privacy`, {
         method: 'PATCH',

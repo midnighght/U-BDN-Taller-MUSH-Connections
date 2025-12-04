@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JWT_SECRET } from 'src/configs/jwt-secret';
 import { CommunitiesModule } from 'src/communities/communities.module';
 import { EmailModule } from 'src/email/email.module';
-import { Neo4jModule } from 'src/neo4j/neo4j.module';
+import { Neo4jModule } from 'src/Neo4J/neo4j.module';
 import { FriendshipsModule } from 'src/friendships/friendships.module';
 
 @Module({

@@ -18,7 +18,7 @@ import {
   signInDTO,
 } from './dto/auth.dto';
 import { EmailService } from 'src/email/email.service';
-import { Neo4jService } from 'src/neo4j/neo4j.service'; 
+import { Neo4jService } from 'src/Neo4J/neo4j.service'; 
 import { FriendshipsService } from 'src/friendships/friendships.service';
 
 type SignInData = { userId: string; username: string; email: string };

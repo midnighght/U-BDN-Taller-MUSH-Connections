@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
-import { Neo4jService } from 'src/neo4j/neo4j.service';
+import { Neo4jService } from 'src/Neo4J/neo4j.service';
 
 @Injectable()
 export class SuggestionsService {

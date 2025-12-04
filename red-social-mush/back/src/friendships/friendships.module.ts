@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { FriendshipsController } from './friendships.controller';
 import { FriendshipsService } from './friendships.service';
 import { Friendship, FriendshipSchema } from './schemas/friendship.schema';
-import { Neo4jModule } from 'src/neo4j/neo4j.module';
+import { Neo4jModule } from 'src/Neo4J/neo4j.module';
 
 @Module({
   imports: [

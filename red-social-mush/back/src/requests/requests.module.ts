@@ -8,7 +8,7 @@ import {
   FriendshipSchema,
 } from 'src/friendships/schemas/friendship.schema';
 import { NotificationsModule } from 'src/notifications/notifications.module';
-import { Neo4jModule } from 'src/neo4j/neo4j.module';
+import { Neo4jModule } from 'src/Neo4J/neo4j.module';
 
 @Module({
   imports: [

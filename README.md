@@ -3,9 +3,9 @@
 ### Equipo de Trabajo: 
 Maximo Sarno, Emily Volta, Martín Ubilla
 
-# MUSHgram
+# MUSH
 
-Una red social moderna desarrollada con React + TypeScript + Tailwind CSS para el curso de Taller de Base de Datos NoSQL.
+Una red social moderna desarrollada con React + TypeScript + Tailwind CSS y Nest.js + MongoDB + Neo4j para el curso de Taller de Base de Datos NoSQL.
 
 ##  Características
 

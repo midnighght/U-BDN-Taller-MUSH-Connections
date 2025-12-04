@@ -16,7 +16,7 @@ import { Request, RequestDocument } from 'src/requests/schemas/requests.schema';
 import { FriendshipsService } from 'src/friendships/friendships.service';
 import { CommunitiesService } from 'src/communities/communities.service';
 import { RequestsService } from 'src/requests/requests.service';
-import { Neo4jService } from 'src/neo4j/neo4j.service';
+import { Neo4jService } from 'src/Neo4J/neo4j.service';
 
 @Injectable()
 export class UsersService {
