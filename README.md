@@ -39,3 +39,21 @@ Una red social moderna desarrollada con React + TypeScript + Tailwind CSS y Nest
 ```bash
 cd Front
 npm install
+
+```
+```bash
+cd back
+npm install
+```
+### Correr Backend y DB con Docker
+
+```
+docker compose up --build
+```
+
+### Correr Frontend de dev con Vite
+
+```bash
+cd Front
+npm run dev
+```
